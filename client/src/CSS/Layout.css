@@ -1,0 +1,39 @@
+/* LandingPage.css or layout-specific CSS file */
+
+:root {
+  --primary-color: #f1c40f;
+  --secondary-color: #f39c12;
+  --font-family: "Arial", sans-serif;
+}
+
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.hero-section {
+  margin-top: 60px; /* space for the NavBar */
+}
+
+.hero-section {
+  margin-left: 260px; /* Ensure content doesn't overlap with sidebar */
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100%;
+  background-color: #333;
+  color: white;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.sidebar div {
+  margin-bottom: 20px;
+  display: flex;
+  position: relative;
+}
