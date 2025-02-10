@@ -11,41 +11,39 @@ const RecipeDashboard = ({ recipes }) => {
         {recipes.length > 0 ? (
           recipes.map((recipe, index) => (
             <div key={index} className='recipe-post'>
-              <Card className='recipe-card'>
-                <img
-                  src={recipe.image || "https://via.placeholder.com/150"}
-                  alt={recipe.name}
-                  className='recipe-card-image'
-                />
-                <CardBody>
-                  <CardTitle tag='h5'>{recipe.name}</CardTitle>
-                  <CardText>
-                    <strong>Ingredients:</strong> {recipe.ingredients}
-                  </CardText>
-                  <CardText>
-                    <strong>Instructions:</strong> {recipe.instructions}
-                  </CardText>
-                  <CardText>
-                    <strong>Prep Time:</strong> {recipe.prepTime} minutes
-                  </CardText>
+              <Link to={`/recipe/${index}`} className='recipe-link'>
+                <Card className='recipe-card'>
+                  <img
+                    src={recipe.image || "https://via.placeholder.com/150"}
+                    alt={recipe.name}
+                    className='recipe-card-image'
+                  />
+                  <CardBody>
+                    <CardTitle tag='h5'>{recipe.name}</CardTitle>
+                    <CardText>
+                      <strong>Ingredients:</strong> {recipe.ingredients}
+                    </CardText>
+                    <CardText>
+                      <strong>Prep Time:</strong> {recipe.prepTime} minutes
+                    </CardText>
 
-                  {/* Interaction Meters */}
-                  <div className='interaction-meters'>
-                    <Button
-                      outline
-                      color='primary'
-                      className='interaction-button'>
-                      {recipe.likes} Likes
-                    </Button>
-                    <Button
-                      outline
-                      color='secondary'
-                      className='interaction-button'>
-                      {recipe.comments} Comments
-                    </Button>
-                  </div>
-                </CardBody>
-              </Card>
+                    <div className='interaction-meters'>
+                      <Button
+                        outline
+                        color='primary'
+                        className='interaction-button'>
+                        {recipe.likes} Likes
+                      </Button>
+                      <Button
+                        outline
+                        color='secondary'
+                        className='interaction-button'>
+                        {recipe.comments} Comments
+                      </Button>
+                    </div>
+                  </CardBody>
+                </Card>
+              </Link>
             </div>
           ))
         ) : (

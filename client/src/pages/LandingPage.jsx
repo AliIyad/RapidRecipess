@@ -3,7 +3,6 @@ import "../CSS/LandingPage.css";
 
 import Features from "../components/Features";
 import SocialProof from "../components/SocialProof";
-import Footer from "../components/Footer";
 
 import { useNavigate } from "react-router-dom";
 
@@ -32,7 +31,6 @@ const LandingPage = () => {
 
       <SocialProof />
       <Features />
-      <Footer />
     </div>
   );
 };

@@ -41,3 +41,8 @@
 .interaction-button {
   width: 120px;
 }
+
+.recipe-link {
+  text-decoration: none;
+  color: inherit;
+}
