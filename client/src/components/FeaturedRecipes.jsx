@@ -21,9 +21,7 @@ const FeaturedRecipesCarousel = ({ recipes }) => {
   };
 
   return (
-    <div
-      className='featured-carousel-container'
-      style={{ borderRadius: "15px", width: "100%", margin: "15px auto" }}>
+    <div className='featured-carousel-container'>
       <Carousel
         activeIndex={activeIndex}
         next={next}
@@ -38,20 +36,28 @@ const FeaturedRecipesCarousel = ({ recipes }) => {
         />
         {recipes.map((recipe, index) => (
           <CarouselItem key={index}>
-            <img
-              src={recipe.imageUrl}
-              alt={recipe.name}
+            <div
               style={{
-                width: "46rem",
-                height: "auto",
-                maxHeight: "250px",
-                objectFit: "cover",
-                borderRadius: "15px",
-                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                transition: "transform 0.3s ease-in-out",
-                margin: "15px auto",
-              }}
-            />
+                width: "100%",
+                height: "250px", // Fixed height for consistency
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                overflow: "hidden", // Ensure no overflow occurs
+              }}>
+              <img
+                src={recipe.imageUrl}
+                alt={recipe.name}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  objectFit: "cover",
+                  transition: "transform 0.3s ease-in-out",
+                  borderRadius: "15px",
+                  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                }}
+              />
+            </div>
             <div className='carousel-caption'>
               <h3>{recipe.name}</h3>
               <p>{recipe.description}</p>

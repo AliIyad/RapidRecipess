@@ -1,25 +1,3 @@
-/* LandingPage.css or layout-specific CSS file */
-
-:root {
-  --primary-color: #f1c40f;
-  --secondary-color: #f39c12;
-  --font-family: "Arial", sans-serif;
-}
-
-.landing-page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-.hero-section {
-  margin-top: 60px; /* space for the NavBar */
-}
-
-.hero-section {
-  margin-left: 260px; /* Ensure content doesn't overlap with sidebar */
-}
-
 .sidebar {
   position: fixed;
   top: 0;
@@ -36,4 +14,28 @@
   margin-bottom: 20px;
   display: flex;
   position: relative;
+}
+
+.footer {
+  background-color: #4b5e2dc4;
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.footer-content p {
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.social-links a {
+  color: white;
+  margin: 0 10px;
+  text-decoration: none;
+}
+
+.social-links a:hover {
+  text-decoration: underline;
 }

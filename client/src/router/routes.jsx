@@ -11,7 +11,6 @@ import Profile from "../pages/ProfilePage";
 import Settings from "../pages/SettingsPage";
 
 import Layout from "../components/Layout";
-import Sidebar from "../components/SideBar";
 
 const Router = () => {
   return (
@@ -23,7 +22,7 @@ const Router = () => {
           <Route path='/about' element={<About />} />
           <Route path='/services' element={<Services />} />
           <Route path='/contact' element={<Contact />} />
-          <Route path='/recipe' element={<RecipePage />} />
+          <Route path='/recipe/:index' element={<RecipePage />} />
           <Route path='/profile' element={<Profile />} />
           <Route path='/settings' element={<Settings />} />
           <Route path='*' element={<PageNotFound />} />

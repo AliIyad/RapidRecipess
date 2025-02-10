@@ -1,0 +1,124 @@
+/* General container for the contact page */
+.contact-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Contact header styling */
+.contact-header {
+  background-color: #4b5e2dc4;
+  color: white;
+  padding: 60px 20px;
+  border-radius: 15px;
+}
+
+.contact-header h1 {
+  font-size: 4rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Contact form container styling */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 40px 20px;
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Contact form heading */
+.contact-form h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Input and textarea styling */
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 5px 0;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+  transition: border 0.3s ease-in-out;
+  background-color: #f8f8f8;
+  color: #000;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: #e04e31;
+}
+
+/* Submit button styling */
+.contact-form button {
+  padding: 12px 30px;
+  background-color: #e04e31;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background-color 0.3s ease;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.contact-form button:hover {
+  background-color: #d73c2f;
+}
+
+/* For better accessibility */
+.contact-form label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+/* Styling for alerts or feedback */
+.contact-form .alert {
+  font-size: 1rem;
+  padding: 12px;
+  margin-top: 20px;
+  border-radius: 5px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+
+/* For expandable input field styling (like for the search bar) */
+.expandable-input {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.2rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  transition: width 0.3s ease-in-out;
+}
+
+.expandable-input:focus {
+  width: 100%;
+  outline: none;
+  border-color: #d73c2f;
+}

@@ -3,6 +3,7 @@ import Navi from "./NavBar";
 import SideBar from "./SideBar";
 
 import "../CSS/Layout.css";
+import Footer from "./Footer";
 
 const Layout = ({ children }) => {
   return (
@@ -10,6 +11,7 @@ const Layout = ({ children }) => {
       <Navi />
       <SideBar />
       {children}
+      <Footer />
     </>
   );
 };

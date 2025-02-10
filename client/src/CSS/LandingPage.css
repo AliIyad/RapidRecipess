@@ -155,27 +155,3 @@
   font-size: 1rem;
   color: #333;
 }
-
-.footer {
-  background-color: #4b5e2dc4;
-  color: white;
-  padding: 40px 20px;
-  text-align: center;
-  border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-.footer-content p {
-  font-size: 1rem;
-  margin-bottom: 10px;
-}
-
-.social-links a {
-  color: white;
-  margin: 0 10px;
-  text-decoration: none;
-}
-
-.social-links a:hover {
-  text-decoration: underline;
-}
