@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const app = express();
 
 const connectDB = require("./src/config/db");
+const AuthRouter = require("./src/config/auth");
 
 connectDB();
 app.use(helmet());
@@ -20,6 +21,8 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
   res.status(200).send("Healthy");
 });
+
+app.use("/auth", AuthRouter);
 
 app.listen(process.env.PORT, () => {
   console.log(

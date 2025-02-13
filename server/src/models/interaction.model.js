@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const interactionSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   contentType: {
@@ -18,3 +20,5 @@ const interactionSchema = new mongoose.Schema({
 });
 
 const Interaction = mongoose.model("Interaction", interactionSchema);
+
+module.exports = Interaction;

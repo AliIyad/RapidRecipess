@@ -1,0 +1,68 @@
+import React, { useState } from "react";
+import { sendPasswordResetEmail, resetPassword } from "../services/authService";
+
+const ResetPasswordForm = () => {
+  const [email, setEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSendResetLink = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await sendPasswordResetEmail(email);
+      setMessage({ type: "success", text: response.message });
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    const { id, token } = window.location.pathname.split("/").slice(-2);
+
+    try {
+      const response = await resetPassword(id, token, newPassword);
+      setMessage({ type: "success", text: response.message });
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    }
+  };
+
+  return (
+    <div>
+      <h2>Reset Password</h2>
+      <form
+        onSubmit={
+          window.location.pathname.includes("reset-password")
+            ? handleResetPassword
+            : handleSendResetLink
+        }>
+        {window.location.pathname.includes("reset-password") ? (
+          <>
+            <input
+              type='password'
+              placeholder='New Password'
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <button type='submit'>Reset Password</button>
+          </>
+        ) : (
+          <>
+            <input
+              type='email'
+              placeholder='Email'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <button type='submit'>Send Reset Link</button>
+          </>
+        )}
+      </form>
+      {message && <p className={message.type}>{message.text}</p>}
+    </div>
+  );
+};
+
+export default ResetPasswordForm;

@@ -16,7 +16,6 @@ const {
   transporter,
   createPasswordResetUrl,
   passwordResetTemplate,
-  PasswordResetConfirmationTemplate,
   passwordResetConfirmationTemplate,
 } = require("../utils/emails");
 
@@ -253,3 +252,5 @@ router.post("/reset-password/:id/:token", async (req, res) => {
     });
   }
 });
+
+module.exports = router;

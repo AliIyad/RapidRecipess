@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const commentSchema = new mongoose.Schema({
   content: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },
@@ -16,3 +18,5 @@ const commentSchema = new mongoose.Schema({
 });
 
 const Comment = mongoose.model("Comment", commentSchema);
+
+module.exports = Comment;
