@@ -1,45 +1,18 @@
-const AuthModal = ({ isOpen, toggleModal, onLoginSuccess }) => {
-  const { isAuthenticated, logout, user } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+import React, { useState, useEffect } from "react";
+import { Modal, ModalHeader, ModalBody } from "reactstrap";
+import AuthForm from "./AuthForm";
 
-  const handleLoginSuccess = () => {
-    if (onLoginSuccess) {
-      onLoginSuccess(); // Call the callback after successful login/registration
-    }
-    toggleModal(); // Close the modal
-  };
+const AuthModal = ({ isOpen, toggleModal, onLoginSuccess }) => {
+  useEffect(() => {
+    console.log("AuthModal Rendered - isOpen:", isOpen);
+  }, [isOpen]);
 
   return (
     <Modal isOpen={isOpen} toggle={toggleModal}>
-      <ModalHeader toggle={toggleModal}>
-        {isAuthenticated ? "Welcome!" : isLogin ? "Login" : "Register"}
-      </ModalHeader>
+      <ModalHeader toggle={toggleModal}>Authentication Required</ModalHeader>
       <ModalBody>
-        {isAuthenticated ? (
-          <div>
-            <h4>Welcome, {user ? user.username : "User"}!</h4>
-            <Button color='danger' onClick={logout}>
-              Logout
-            </Button>
-          </div>
-        ) : (
-          <>
-            {isLogin ? (
-              <LoginForm onSuccess={handleLoginSuccess} />
-            ) : (
-              <RegisterForm onSuccess={handleLoginSuccess} />
-            )}
-            <Button color='link' onClick={() => setIsLogin(!isLogin)}>
-              Switch to {isLogin ? "Register" : "Login"}
-            </Button>
-          </>
-        )}
+        <AuthForm onSuccess={onLoginSuccess} />
       </ModalBody>
-      <ModalFooter>
-        <Button color='secondary' onClick={toggleModal}>
-          Close
-        </Button>
-      </ModalFooter>
     </Modal>
   );
 };

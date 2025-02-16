@@ -7,9 +7,15 @@ const app = express();
 const connectDB = require("./src/config/db");
 const AuthRouter = require("./src/config/auth");
 
+const corsOptions = {
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true,
+  optionSuccessStatus: 200,
+};
+
 connectDB();
 app.use(helmet());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 dotenv.config();

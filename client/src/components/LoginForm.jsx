@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { loginUser } from "../services/authService";
 
+import "../CSS/AuthForm.css";
+
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +36,9 @@ const LoginForm = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type='submit'>Login</button>
+        <button type='submit' onClick={handleSubmit}>
+          Login
+        </button>
       </form>
       {message && <p className={message.type}>{message.text}</p>}
     </div>

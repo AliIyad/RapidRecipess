@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { registerUser } from "../services/authService";
 
+import "../CSS/AuthForm.css";
+
 const RegisterForm = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -41,7 +43,9 @@ const RegisterForm = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type='submit'>Register</button>
+        <button type='submit' onClick={handleSubmit}>
+          Register
+        </button>
       </form>
       {message && <p className={message.type}>{message.text}</p>}
     </div>

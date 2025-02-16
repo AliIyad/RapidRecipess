@@ -1,7 +1,28 @@
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import { loginUser, registerUser } from "../services/authService";
+import Cookies from "js-cookie";
 
 const AuthContext = createContext();
+
+const fetchUser = () => {
+  useEffect(() => {
+    const fetchUser = async () => {
+      const accessToken = Cookies.get("accessToken");
+      if (accessToken) {
+        try {
+          const response = await axios.get("/auth/protected", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          setUser(response.data.user);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error("Error fetching user:", error);
+        }
+      }
+    };
+    fetchUser();
+  }, []);
+};
 
 export const useAuth = () => {
   return useContext(AuthContext);
@@ -14,6 +35,8 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await loginUser({ email, password });
+      Cookies.set("accessToken", response.token);
+      Cookies.set("refreshToken", response.refreshToken);
       setUser(response.user);
       setIsAuthenticated(true);
     } catch (error) {
@@ -32,6 +55,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    Cookies.remove("accessToken");
+    Cookies.remove("refreshToken");
     setUser(null);
     setIsAuthenticated(false);
   };
