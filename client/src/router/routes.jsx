@@ -9,6 +9,7 @@ import LandingPage from "../pages/LandingPage";
 import RecipePage from "../pages/RecipePage";
 import Profile from "../pages/ProfilePage";
 import Settings from "../pages/SettingsPage";
+import Community from "../pages/CommunityPage";
 
 import Layout from "../components/Layout";
 import withAuth from "../services/withAuth";
@@ -19,6 +20,7 @@ const ProtectedContact = withAuth(Contact);
 const ProtectedRecipePage = withAuth(RecipePage);
 const ProtectedProfile = withAuth(Profile);
 const ProtectedSettings = withAuth(Settings);
+const ProtectedCommunity = withAuth(Community);
 
 const Router = () => {
   return (
@@ -28,6 +30,7 @@ const Router = () => {
           <Route path='/' element={<LandingPage />} />
           <Route path='/home' element={<ProtectedHome />} />
           <Route path='/about' element={<About />} />
+          <Route path='/Community' element={<ProtectedCommunity />} />
           <Route path='/services' element={<ProtectedServices />} />
           <Route path='/contact' element={<ProtectedContact />} />
           <Route path='/recipe/:index' element={<ProtectedRecipePage />} />

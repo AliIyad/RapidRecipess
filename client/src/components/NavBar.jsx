@@ -48,6 +48,9 @@ function Navi(args) {
         <Collapse isOpen={isOpen} navbar>
           <Nav className='me-auto' navbar style={{ marginRight: "auto" }}>
             <NavItem>
+              <NavLink href='/community'>Community</NavLink>
+            </NavItem>
+            <NavItem>
               <NavLink href='/about'>About</NavLink>
             </NavItem>
             <NavItem>
@@ -67,6 +70,7 @@ function Navi(args) {
                 <DropdownItem href='/profile'>Profile</DropdownItem>
                 <DropdownItem href='/services'>Services</DropdownItem>
                 <DropdownItem href='/settings'>Settings</DropdownItem>
+                <DropdownItem href='/logout'>Logout</DropdownItem>
                 <DropdownItem divider />
               </DropdownMenu>
             </UncontrolledDropdown>

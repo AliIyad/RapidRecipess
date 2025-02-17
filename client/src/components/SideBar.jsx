@@ -1,7 +1,7 @@
-import React from "react";
+import React, { Children } from "react";
 import { useLocation } from "react-router-dom";
 
-const Sidebar = () => {
+const Sidebar = ({children}) => {
   const location = useLocation();
 
   const getSidebarContent = () => {
@@ -17,7 +17,11 @@ const Sidebar = () => {
     }
   };
 
-  return <div className='sidebar'>{getSidebarContent()}</div>;
+  return (
+    <div className='sidebar'>{getSidebarContent()}
+    {children}
+    </div>
+  );
 };
 
 export default Sidebar;

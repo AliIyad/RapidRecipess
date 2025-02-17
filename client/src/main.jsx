@@ -7,14 +7,13 @@ import "./index.css";
 
 import Layout from "./components/Layout.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Router>
       <AuthProvider>
-        <Layout>
           <App />
-        </Layout>
       </AuthProvider>
     </Router>
   </React.StrictMode>
