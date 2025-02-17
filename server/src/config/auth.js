@@ -128,7 +128,7 @@ router.post("/refresh_token", async (req, res) => {
         type: "error",
       });
 
-    if (user.refreshToken !== refreshtoken)
+    if (user.refreshtoken !== refreshtoken)
       return res.status(500).json({
         message: "Invalid refresh token! 🤫",
         type: "error",
@@ -137,7 +137,7 @@ router.post("/refresh_token", async (req, res) => {
     const accessToken = createAccessToken(user._id);
     const refreshToken = createRefreshToken(user._id);
 
-    user.refreshToken = refreshToken;
+    user.refreshtoken = refreshToken;
 
     sendRefreshToken(res, refreshToken);
     return res.json({
@@ -181,32 +181,32 @@ router.post("/send-password-reset-email", async (req, res) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
 
-    if (!user) {
+    if (!user)
       return res.status(500).json({
         message: "User doesn't exist!",
         type: "error",
       });
-    }
 
     const token = createPasswordResetToken({ ...user, createdAt: Date.now() });
     const url = createPasswordResetUrl(user._id, token);
     const mailOptions = passwordResetTemplate(user, url);
-
     transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        console.error("Email send error:", err);
-        return res
-          .status(500)
-          .json({ message: "Error sending email", type: "error" });
-      }
+      if (err)
+        return res.status(500).json({
+          message: "Error sending email",
+          type: "error",
+        });
       return res.json({
         type: "success",
-        message: "Password reset link has been sent!",
+        message: "Password reset link has been sent to your email!",
       });
     });
   } catch (error) {
-    console.error("Error in password reset email:", error);
-    res.status(500).json({ type: "error", message: "Error sending email" });
+    res.status(500).json({
+      type: "error",
+      message: "Error sending email",
+      error,
+    });
   }
 });
 
@@ -216,35 +216,40 @@ router.post("/reset-password/:id/:token", async (req, res) => {
     const { newPassword } = req.body;
     const user = await User.findById(id);
 
-    if (!user) {
-      return res
-        .status(500)
-        .json({ message: "User does not exist!", type: "error" });
-    }
+    if (!user)
+      return res.status(500).json({
+        message: "User does not exist!",
+        type: "error",
+      });
 
     const isValid = verify(token, user.password);
-    if (!isValid) {
-      return res.status(500).json({ message: "Invalid token", type: "error" });
-    }
+    if (!isValid)
+      return res.status(500).json({
+        message: "ivalid token",
+        type: "error",
+      });
 
     user.password = await hash(newPassword, 10);
     await user.save();
 
     const mailOptions = passwordResetConfirmationTemplate(user);
     transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        console.error("Email send error:", err);
-        return res
-          .status(500)
-          .json({ message: "Error sending email", type: "error" });
-      }
-      return res.json({ message: "Email sent!", type: "success" });
+      if (err)
+        return res.status(500).json({
+          message: "Error sending email",
+          type: "error",
+        });
+      return res.json({
+        message: "Email sent!",
+        type: "success",
+      });
     });
   } catch (error) {
-    console.error("Error resetting password:", error);
-    res
-      .status(500)
-      .json({ type: "error", message: "Error resetting password" });
+    res.status(500).json({
+      type: "error",
+      message: "Error sending email",
+      error,
+    });
   }
 });
 
