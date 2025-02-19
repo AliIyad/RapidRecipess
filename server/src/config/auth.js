@@ -39,10 +39,25 @@ router.post("/register", async (req, res) => {
       password: passwordHash,
     });
 
+    const accessToken = createAccessToken({ id: newUser._id });
+    const refreshToken = createRefreshToken({ id: newUser._id });
+
+    newUser.refreshToken = refreshToken;
+    newUser.accessToken = accessToken;
+
     await newUser.save();
+
+    sendRefreshToken(res, refreshToken);
+    sendAccessToken(res, accessToken);
+
     res.status(200).json({
       message: "User created successfully! 👩🏼‍🍳",
       type: "success",
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+        username: newUser.username,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -74,10 +89,20 @@ router.post("/login", async (req, res) => {
     const refreshToken = createRefreshToken({ id: user._id });
 
     user.refreshToken = refreshToken;
+    user.accessToken = accessToken;
     await user.save();
 
-    sendAccessToken(req, res, accessToken);
-    sendRefreshToken(req, res, refreshToken);
+    sendRefreshToken(res, refreshToken);
+    sendAccessToken(res, accessToken);
+    res.status(200).json({
+      message: "Login successful! 🎉",
+      type: "success",
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+      },
+    });
   } catch (error) {
     res.status(500).json({
       type: "error",
@@ -87,12 +112,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/logout", async (_req, res) => {
+router.post("/logout", async (req, res) => {
+  res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
-  res.status(200).json({
-    message: "Logout successful! 👋🏼",
-    type: "success",
-  });
+  res.status(200).json({ message: "Logged out successfully" });
 });
 
 router.post("/refresh_token", async (req, res) => {

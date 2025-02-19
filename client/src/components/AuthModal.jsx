@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Modal, ModalHeader, ModalBody } from "reactstrap";
 import AuthForm from "./AuthForm";
+import { useAuth } from "../context/AuthContext";
 
-const AuthModal = ({ isOpen, toggleModal, onLoginSuccess }) => {
-  useEffect(() => {
-    console.log("AuthModal Rendered - isOpen:", isOpen);
-  }, [isOpen]);
+const AuthModal = ({ isOpen, toggleModal }) => {
+  const { verifyTokens } = useAuth();
+
+  const handleSuccess = async () => {
+    await verifyTokens();
+    toggleModal();
+  };
 
   return (
     <Modal isOpen={isOpen} toggle={toggleModal}>
       <ModalHeader toggle={toggleModal}>Authentication Required</ModalHeader>
       <ModalBody>
-        <AuthForm onSuccess={onLoginSuccess} />
+        <AuthForm onSuccess={handleSuccess} />
       </ModalBody>
     </Modal>
   );

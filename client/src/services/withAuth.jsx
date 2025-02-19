@@ -1,38 +1,66 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import AuthModal from "../components/AuthModal";
 import Cookies from "js-cookie";
-import { useNavigate } from "react-router-dom";
 
 const withAuth = (WrappedComponent) => {
-  return function AuthenticatedComponent(props) {
+  function AuthenticatedComponent(props) {
     const navigate = useNavigate();
-    const accessToken = Cookies.get("accessToken");
+    const { isAuthenticated, isLoading, verifyTokens } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [initialCheckDone, setInitialCheckDone] = useState(false);
 
-    console.log("withAuth executing - AccessToken:", accessToken);
+    // Check cookies directly on mount
+    useEffect(() => {
+      const checkAuth = async () => {
+        const hasTokens =
+          Cookies.get("accessToken") && Cookies.get("refreshToken");
+        if (hasTokens) {
+          await verifyTokens();
+        }
+        setInitialCheckDone(true);
+      };
+      checkAuth();
+    }, [verifyTokens]);
 
     useEffect(() => {
-      if (!accessToken) {
-        console.log("User not authenticated - Opening modal");
-        setIsModalOpen(true);
-        // Uncomment the navigate below if you want to redirect
-        // navigate("/home");
+      if (!isLoading && initialCheckDone) {
+        if (!isAuthenticated) {
+          setIsModalOpen(true);
+        } else {
+          setIsModalOpen(false);
+        }
       }
-    }, [accessToken, navigate]);
+    }, [isAuthenticated, isLoading, initialCheckDone]);
 
-    if (!accessToken && isModalOpen) {
-      console.log("Rendering AuthModal");
-      return (
-        <AuthModal
-          isOpen={isModalOpen}
-          toggleModal={() => setIsModalOpen(false)}
-        />
-      );
+    const handleModalClose = () => {
+      setIsModalOpen(false);
+      if (!isAuthenticated) {
+        //navigate("/");
+      }
+    };
+
+    if (!initialCheckDone || isLoading) {
+      return <div className='loading-screen'>Checking authentication...</div>;
     }
 
-    console.log("Rendering WrappedComponent");
-    return <WrappedComponent {...props} />;
-  };
+    return (
+      <>
+        <AuthModal
+          isOpen={isModalOpen && !isAuthenticated}
+          toggleModal={handleModalClose}
+        />
+        {isAuthenticated && <WrappedComponent {...props} />}
+      </>
+    );
+  }
+
+  AuthenticatedComponent.displayName = `withAuth(${
+    WrappedComponent.displayName || WrappedComponent.name || "Component"
+  })`;
+
+  return AuthenticatedComponent;
 };
 
 export default withAuth;

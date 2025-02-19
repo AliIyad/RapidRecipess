@@ -3,7 +3,7 @@ import { loginUser } from "../services/authService";
 
 import "../CSS/AuthForm.css";
 
-const LoginForm = () => {
+const LoginForm = ({ onSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -15,6 +15,7 @@ const LoginForm = () => {
     try {
       const response = await loginUser(credentials);
       setMessage({ type: "success", text: response.message });
+      onSuccess();
     } catch (error) {
       setMessage({ type: "error", text: error.message });
     }

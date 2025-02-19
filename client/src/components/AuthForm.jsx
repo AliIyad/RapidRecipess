@@ -4,7 +4,7 @@ import RegisterForm from "./RegisterForm";
 
 import "../CSS/AuthForm.css";
 
-const AuthForm = () => {
+const AuthForm = ({ onSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
 
   const toggleForm = () => {
@@ -13,7 +13,11 @@ const AuthForm = () => {
 
   return (
     <div className='auth-form-container'>
-      {isLogin ? <LoginForm /> : <RegisterForm />}
+      {isLogin ? (
+        <LoginForm onSuccess={onSuccess} />
+      ) : (
+        <RegisterForm onSuccess={onSuccess} />
+      )}
       <div className='auth-switch-btn'>
         {isLogin ? (
           <p>

@@ -3,7 +3,7 @@ import { registerUser } from "../services/authService";
 
 import "../CSS/AuthForm.css";
 
-const RegisterForm = () => {
+const RegisterForm = ({ onSuccess }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +16,7 @@ const RegisterForm = () => {
     try {
       const response = await registerUser(userData);
       setMessage({ type: "success", text: response.message });
+      onSuccess();
     } catch (error) {
       setMessage({ type: "error", text: error.message });
     }

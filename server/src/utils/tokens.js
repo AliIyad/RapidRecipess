@@ -12,17 +12,19 @@ const createRefreshToken = (userId) => {
   });
 };
 
-const sendAccessToken = (_req, res, accessToken) => {
-  res.status(200).json({
-    accessToken,
-    message: "Registration successful! 🍳",
-    type: "success",
+const sendAccessToken = (res, accessToken) => {
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    sameSite: "strict",
+    maxAge: 15 * 60 * 1000, // 15 minutes
   });
 };
 
-const sendRefreshToken = (_req, res, refreshToken) => {
+const sendRefreshToken = (res, refreshToken) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
 

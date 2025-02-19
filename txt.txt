@@ -1,0 +1,14 @@
+**Issues**
+
+1. Redirecting is indiscriminate whether registered or not
+2. Modal is persistent despite having tokens logged and stored in cookies
+3. Activity is hindered by modal being improperly implemented
+
+**Fixes for Next Session**
+
+1. Fix the modal from the very root of the cause
+2. Remake the interaction if need be
+3. Put aside the modal and focus on making dummy data and fetching it to the front end
+4. Fully flesh out the backend along with routes and services
+5. Create the friend system and the 1:1 chat between friends using websockets
+6. Flush out the recipe detail page and profile pages asap

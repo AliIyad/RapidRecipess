@@ -10,7 +10,6 @@ const AuthRouter = require("./src/config/auth");
 const corsOptions = {
   origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true,
-  optionSuccessStatus: 200,
 };
 
 connectDB();
