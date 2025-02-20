@@ -27,7 +27,10 @@ api.interceptors.response.use(
 export const registerUser = async (userData) => {
   try {
     const response = await api.post("/register", userData);
-    return response.data;
+    return {
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken,
+    };
   } catch (error) {
     throw error.response?.data || "Error during registration";
   }
@@ -36,7 +39,10 @@ export const registerUser = async (userData) => {
 export const loginUser = async (credentials) => {
   try {
     const response = await api.post("/login", credentials);
-    return response.data;
+    return {
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken,
+    };
   } catch (error) {
     throw error.response?.data || "Error during login";
   }

@@ -1,66 +1,37 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import AuthModal from "../components/AuthModal";
-import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom"; // Use Redirect to navigate the user if unauthenticated
 
 const withAuth = (WrappedComponent) => {
-  function AuthenticatedComponent(props) {
+  return function AuthenticatedComponent(props) {
     const navigate = useNavigate();
-    const { isAuthenticated, isLoading, verifyTokens } = useAuth();
+    const { isAuthenticated, isLoading, verifyAuthState } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [initialCheckDone, setInitialCheckDone] = useState(false);
-
-    // Check cookies directly on mount
-    useEffect(() => {
-      const checkAuth = async () => {
-        const hasTokens =
-          Cookies.get("accessToken") && Cookies.get("refreshToken");
-        if (hasTokens) {
-          await verifyTokens();
-        }
-        setInitialCheckDone(true);
-      };
-      checkAuth();
-    }, [verifyTokens]);
 
     useEffect(() => {
-      if (!isLoading && initialCheckDone) {
-        if (!isAuthenticated) {
-          setIsModalOpen(true);
-        } else {
-          setIsModalOpen(false);
-        }
+      if (!isAuthenticated && !isLoading) {
+        setIsModalOpen(true); // Open modal if not authenticated
+      } else {
+        setIsModalOpen(false); // Close modal if authenticated
       }
-    }, [isAuthenticated, isLoading, initialCheckDone]);
+    }, [isAuthenticated, isLoading]);
 
-    const handleModalClose = () => {
-      setIsModalOpen(false);
-      if (!isAuthenticated) {
-        //navigate("/");
-      }
-    };
+    if (isLoading) {
+      return <div>Loading...</div>; // Show loading screen while checking auth
+    }
 
-    if (!initialCheckDone || isLoading) {
-      return <div className='loading-screen'>Checking authentication...</div>;
+    if (!isAuthenticated) {
+      return navigate("/"); // Redirect to homepage or login page if not authenticated
     }
 
     return (
       <>
-        <AuthModal
-          isOpen={isModalOpen && !isAuthenticated}
-          toggleModal={handleModalClose}
-        />
-        {isAuthenticated && <WrappedComponent {...props} />}
+        <AuthModal isOpen={isModalOpen} toggleModal={setIsModalOpen} />
+        <WrappedComponent {...props} />
       </>
     );
-  }
-
-  AuthenticatedComponent.displayName = `withAuth(${
-    WrappedComponent.displayName || WrappedComponent.name || "Component"
-  })`;
-
-  return AuthenticatedComponent;
+  };
 };
 
 export default withAuth;

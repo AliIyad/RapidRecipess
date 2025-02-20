@@ -1,137 +1,137 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
-import axios from "axios";
-import { loginUser, registerUser } from "../services/authService";
-import Cookies from "js-cookie";
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { registerUser, loginUser } from "../services/authService"; // Import the API functions
+import Cookies from "js-cookie"; // To handle cookies
 
+// Create the AuthContext
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
+// Custom hook to use the AuthContext
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
 
+// AuthProvider component that will wrap your app and provide auth state
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // For loading state (to handle auth checks)
 
-  const verifyTokens = async () => {
+  // Check if the user is already authenticated based on stored tokens
+  const verifyAuth = async () => {
+    setIsLoading(true);
     try {
-      // Check for both tokens
       const accessToken = Cookies.get("accessToken");
       const refreshToken = Cookies.get("refreshToken");
 
-      if (!accessToken || !refreshToken) {
-        throw new Error("No tokens found");
-      }
-
-      // Verify tokens with backend
-      const response = await axios.get("/auth/protected", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "x-refresh-token": refreshToken,
-        },
-      });
-
-      // Update cookies from response if refreshed
-      const newAccessToken = response.headers["x-access-token"];
-      if (newAccessToken) {
-        Cookies.set("accessToken", newAccessToken, {
-          expires: 15 / (24 * 60), // 15 minutes
-          secure: true,
-          sameSite: "strict",
+      if (accessToken && refreshToken) {
+        // Verify the tokens (using your existing API function)
+        const response = await axios.get("/auth/verify", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "x-refresh-token": refreshToken,
+          },
         });
-      }
 
-      setUser(response.data.user);
-      setIsAuthenticated(true);
+        if (response.status === 200) {
+          setUser(response.data); // Set the user data if tokens are valid
+          setIsAuthenticated(true);
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
     } catch (error) {
-      // Clear invalid tokens
-      Cookies.remove("accessToken");
-      Cookies.remove("refreshToken");
-      setUser(null);
+      console.error("Authentication error:", error);
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    verifyTokens();
-  }, []);
-
-  const login = async (email, password) => {
+  const verifyAuthState = async () => {
+    setIsLoading(true);
     try {
-      const { accessToken, refreshToken } = await loginUser({
-        email,
-        password,
-      });
+      await verifyAuth(); // This will check if the user is authenticated using the token in cookies
+      setIsAuthenticated(true);
+    } catch (error) {
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      // Set cookies client-side
+  // Function to handle login
+  const login = async (credentials) => {
+    try {
+      const { accessToken, refreshToken } = await loginUser(credentials);
+      // Store tokens in cookies after login
       Cookies.set("accessToken", accessToken, {
-        expires: 15 / (24 * 60), // 15 minutes
         secure: true,
         sameSite: "strict",
       });
-
       Cookies.set("refreshToken", refreshToken, {
-        expires: 7, // 7 days
         secure: true,
         sameSite: "strict",
       });
 
-      await verifyTokens();
-      return true;
+      setIsAuthenticated(true);
+      verifyAuth(); // Re-verify after login
     } catch (error) {
       console.error("Login failed:", error);
-      throw error;
+      setIsAuthenticated(false);
+      throw error; // Propagate error to be handled in the UI
     }
   };
 
-  const register = async (username, email, password) => {
+  // Function to handle registration
+  const register = async (userData) => {
     try {
-      const { accessToken, refreshToken } = await registerUser({
-        username,
-        email,
-        password,
-      });
-
+      const { accessToken, refreshToken } = await registerUser(userData);
+      // Store tokens in cookies after registration
       Cookies.set("accessToken", accessToken, {
-        expires: 15 / (24 * 60),
         secure: true,
         sameSite: "strict",
       });
-
       Cookies.set("refreshToken", refreshToken, {
-        expires: 7,
         secure: true,
         sameSite: "strict",
       });
 
-      await verifyTokens();
-      return true;
+      setIsAuthenticated(true);
+      verifyAuth(); // Re-verify after registration
     } catch (error) {
       console.error("Registration failed:", error);
-      throw error;
+      setIsAuthenticated(false);
+      throw error; // Propagate error to be handled in the UI
     }
   };
 
+  // Function to handle logout
   const logout = () => {
+    // Clear cookies on logout
     Cookies.remove("accessToken");
     Cookies.remove("refreshToken");
     setUser(null);
     setIsAuthenticated(false);
   };
 
+  useEffect(() => {
+    verifyAuth();
+    verifyAuthState();
+  }, []);
+
+  // Context value that will be provided to the rest of the app
+  const contextValue = {
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    register,
+    logout,
+    verifyAuth, // Add verifyAuth to context value so it can be used in components
+    verifyAuthState,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated,
-        isLoading,
-        login,
-        register,
-        logout,
-        verifyTokens,
-      }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
