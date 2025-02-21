@@ -1,47 +1,70 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Container, Card, CardBody, CardTitle, CardText } from "reactstrap";
+import axios from "axios";
 
-const RecipeDetail = () => {
-  const { index } = useParams(); // Get the recipe index from the URL
-  //const recipe = JSON.parse(localStorage.getItem("recipes"))[index]; // Retrieve the recipe from localStorage or state
+const RecipeDetail = ({ id }) => {
+  const [recipe, setRecipe] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const recipe = {
-    name: "Lasagna",
-    ingredients: "Pasta, meat, tomato sauce, cheese",
-    instructions: "Cook the pasta, add the sauce, and layer the cheese on top",
-    prepTime: 30,
-    cookTime: 30,
-    overallTime: 60,
-    servings: 4,
-    calories: 500,
-    difficulty: "Medium",
-    tags: ["Italian", "Dinner"],
-    image:
-      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-  };
+  useEffect(() => {
+    const fetchRecipe = async () => {
+      try {
+        const response = await axios.get(`http://localhost:6969/recipes/${id}`);
+        setRecipe(response.data);
+      } catch (error) {
+        console.error("Error fetching recipe:", error);
+        setError("Failed to fetch recipe. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipe();
+  }, [id]);
+
+  if (loading) {
+    return <p>Loading recipe...</p>;
+  }
+
+  if (error) {
+    return <p className='text-danger'>{error}</p>;
+  }
 
   if (!recipe) {
     return <p>Recipe not found</p>;
   }
 
   return (
-    <Container className='recipe-detail mt-5'>
+    <Container className='recipe-detail'>
       <Card className='recipe-card'>
         <img
           src={recipe.image || "https://via.placeholder.com/150"}
-          alt={recipe.name}
+          alt={recipe.title}
+          className='recipe-image'
         />
-        <CardBody>
-          <CardTitle tag='h5'>{recipe.name}</CardTitle>
+        <CardBody className='recipe-card-body'>
+          <CardTitle tag='h1' className='recipe-title'>
+            {recipe.title}
+          </CardTitle>
           <CardText>
-            <strong>Ingredients:</strong> {recipe.ingredients}
+            <strong>Ingredients:</strong> {recipe.ingredients.join(", ")}
           </CardText>
           <CardText>
-            <strong>Instructions:</strong> {recipe.instructions}
+            <strong>Instructions:</strong> {recipe.steps.join("\n")}
           </CardText>
           <CardText>
             <strong>Prep Time:</strong> {recipe.prepTime} minutes
+          </CardText>
+          <CardText>
+            <strong>Cook Time:</strong> {recipe.cookTime} minutes
+          </CardText>
+          <CardText>
+            <strong>Difficulty:</strong> {recipe.difficulty}
+          </CardText>
+          <CardText>
+            <strong>Tags:</strong> {recipe.tags.join(", ")}
           </CardText>
         </CardBody>
       </Card>

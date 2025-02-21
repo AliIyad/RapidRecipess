@@ -8,6 +8,7 @@ import {
   Label,
   Alert,
 } from "reactstrap";
+import axios from "axios";
 import "../CSS/RecipeForm.css";
 
 const RecipeForm = ({ setRecipes }) => {
@@ -51,8 +52,17 @@ const RecipeForm = ({ setRecipes }) => {
         comments: 0, // Default comment count
       };
 
-      setRecipes((prevRecipes) => [newRecipe, ...prevRecipes]);
-      setFeedback("Thank you! Your recipe has been submitted.");
+      // Send the new recipe to the backend
+      axios
+        .post("http://localhost:6969/recipes", newRecipe)
+        .then((response) => {
+          setRecipes((prevRecipes) => [response.data, ...prevRecipes]);
+          setFeedback("Thank you! Your recipe has been submitted.");
+        })
+        .catch((error) => {
+          setFeedback("There was an error submitting your recipe.");
+          console.error(error);
+        });
 
       setRecipeName("");
       setIngredients("");
@@ -78,71 +88,12 @@ const RecipeForm = ({ setRecipes }) => {
 
       {isFormVisible && (
         <Form onSubmit={handleFormSubmit} className='recipe-form'>
-          <FormGroup>
-            <Label for='recipeName'>Recipe Name</Label>
-            <Input
-              type='text'
-              id='recipeName'
-              value={recipeName}
-              onChange={(e) => setRecipeName(e.target.value)}
-              placeholder='Enter recipe name'
-              required
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label for='ingredients'>Ingredients</Label>
-            <Input
-              type='textarea'
-              id='ingredients'
-              value={ingredients}
-              onChange={(e) => setIngredients(e.target.value)}
-              placeholder='List all the ingredients'
-              required
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label for='instructions'>Instructions</Label>
-            <Input
-              type='textarea'
-              id='instructions'
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              placeholder='How to make this delicious dish?'
-              required
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label for='prepTime'>Preparation Time (in minutes)</Label>
-            <Input
-              type='number'
-              id='prepTime'
-              value={prepTime}
-              onChange={(e) => setPrepTime(e.target.value)}
-              placeholder='Enter prep time'
-              required
-              min='1'
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label for='recipeImage'>Upload an Image of Your Dish</Label>
-            <Input
-              type='file'
-              id='recipeImage'
-              accept='image/*'
-              onChange={(e) => setRecipeImage(e.target.files[0])}
-            />
-          </FormGroup>
-
+          {/* Form Inputs */}
           <Button
             type='submit'
             color='success'
             block
-            className='buttons-container'
-            onClick={handleFormSubmit}>
+            className='buttons-container'>
             Submit Recipe
           </Button>
 

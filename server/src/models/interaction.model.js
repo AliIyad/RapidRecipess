@@ -4,7 +4,7 @@ const interactionSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   contentType: {
     type: String,
-    enum: ["recipe", "comment"],
+    enum: "comment",
     required: true,
   },
   contentId: {

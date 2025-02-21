@@ -46,3 +46,16 @@
   text-decoration: none;
   color: inherit;
 }
+
+/* RecipeDashboard.css */
+.load-more-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+}
+
+.load-more-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

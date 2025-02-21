@@ -1,28 +1,44 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
+  Input,
   Collapse,
   Navbar,
   NavbarToggler,
   NavbarBrand,
   Nav,
   NavItem,
-  NavLink,
   UncontrolledDropdown,
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
+  Button,
 } from "reactstrap";
-
 import "bootstrap/dist/css/bootstrap.min.css";
-
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 function Navi(args) {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [recipes, setRecipes] = useState([]);
+  const [error, setError] = useState(null);
   const { user, logout } = useAuth();
 
-  const handlelogout = () => {
+  const handleSearch = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:6969/recipes/ingredient/${searchTerm}`
+      );
+      setRecipes(response.data);
+    } catch (error) {
+      console.error("Error searching recipes:", error);
+      setError("Failed to search recipes. Please try again later.");
+    }
+  };
+
+  const handleLogout = () => {
     logout();
   };
 
@@ -36,7 +52,7 @@ function Navi(args) {
   return (
     <div>
       <Navbar {...args} color='dark' dark expand='md' fixed='top'>
-        <NavbarBrand href='/home'>
+        <NavbarBrand tag={Link} to='/home'>
           <img
             src='./logo.png'
             alt='Rapid Recipes Logo'
@@ -55,13 +71,19 @@ function Navi(args) {
         <Collapse isOpen={isOpen} navbar>
           <Nav className='me-auto' navbar style={{ marginRight: "auto" }}>
             <NavItem>
-              <NavLink href='/community'>Community</NavLink>
+              <Link className='nav-link' to='/community'>
+                Community
+              </Link>
             </NavItem>
             <NavItem>
-              <NavLink href='/about'>About</NavLink>
+              <Link className='nav-link' to='/about'>
+                About
+              </Link>
             </NavItem>
             <NavItem>
-              <NavLink href='/contact'>Contact</NavLink>
+              <Link className='nav-link' to='/contact'>
+                Contact
+              </Link>
             </NavItem>
             <UncontrolledDropdown nav inNavbar>
               <DropdownToggle
@@ -74,16 +96,35 @@ function Navi(args) {
               </DropdownToggle>
               <DropdownMenu end>
                 <DropdownItem divider />
-                <DropdownItem href='/profile'>Profile</DropdownItem>
-                <DropdownItem href='/services'>Services</DropdownItem>
-                <DropdownItem href='/settings'>Settings</DropdownItem>
-                <DropdownItem href={"/"} onClick={handlelogout}>
-                  Logout
+                <DropdownItem tag={Link} to='/profile'>
+                  Profile
                 </DropdownItem>
+                <DropdownItem tag={Link} to='/services'>
+                  Services
+                </DropdownItem>
+                <DropdownItem tag={Link} to='/settings'>
+                  Settings
+                </DropdownItem>
+                <DropdownItem onClick={handleLogout}>Logout</DropdownItem>
                 <DropdownItem divider />
               </DropdownMenu>
             </UncontrolledDropdown>
           </Nav>
+          <div className='navbar-search'>
+            <Input
+              type='text'
+              placeholder='Search by ingredient...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className='search-input'
+            />
+            <Button
+              color='primary'
+              onClick={handleSearch}
+              className='search-button'>
+              Search
+            </Button>
+          </div>
         </Collapse>
       </Navbar>
     </div>

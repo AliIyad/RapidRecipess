@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const recipeSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  ingredients: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ingredient" }],
+  ingredients: [{ type: String, required: true }], // Array of ingredient names
   steps: [String],
   prepTime: Number,
   cookTime: Number,
@@ -10,7 +10,7 @@ const recipeSchema = new mongoose.Schema({
   tags: [String],
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-  Interactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Interaction" }],
+  interactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Interaction" }],
   createdAt: { type: Date, default: Date.now },
 });
 
