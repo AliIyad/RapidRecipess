@@ -4,8 +4,9 @@ const User = require("../models/user.model");
 
 const protect = async (req, res, next) => {
   try {
-    // 1. Get token from cookies
-    const token = req.cookies.accessToken;
+    // 1. Get token from Authorization header or cookies
+    const authHeader = req.headers.authorization;
+    const token = authHeader ? authHeader.split(' ')[1] : req.cookies.accessToken;
 
     if (!token) {
       return res.status(401).json({
@@ -27,12 +28,22 @@ const protect = async (req, res, next) => {
       });
     }
 
+    // 4. Check refresh token if provided
+    const refreshToken = req.headers["x-refresh-token"] || req.cookies.refreshToken;
+    if (refreshToken && user.refreshToken !== refreshToken) {
+      return res.status(401).json({
+        message: "Invalid refresh token! 🔑",
+        type: "error",
+      });
+    }
+
     req.user = user;
     next();
   } catch (error) {
     return res.status(401).json({
       message: "Invalid Token! 🤔",
       type: "error",
+      error: error.message
     });
   }
 };

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { loginUser } from "../services/authService";
 import "../CSS/AuthForm.css";
 
 const LoginForm = ({ onSuccess }) => {
@@ -11,36 +10,47 @@ const LoginForm = ({ onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const credentials = { email, password };
-
     try {
-      const response = await loginUser(credentials);
-      setMessage({ type: "success", text: response.message });
-      onSuccess();
+      await login(email, password);
+      setMessage({ type: "success", text: "Login successful!" });
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
-      setMessage({ type: "error", text: error.message });
+      setMessage({ 
+        type: "error", 
+        text: error.response?.data?.message || error.message || "Login failed"
+      });
     }
   };
 
   return (
-    <div>
+    <div className="login-form">
       <h2>Login</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type='email'
-          placeholder='Email'
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type='password'
-          placeholder='Password'
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type='submit'>Login</button>
+        <div className="form-group">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit">Login</button>
       </form>
-      {message && <p className={message.type}>{message.text}</p>}
+      {message && (
+        <p className={`message ${message.type}`}>{message.text}</p>
+      )}
     </div>
   );
 };

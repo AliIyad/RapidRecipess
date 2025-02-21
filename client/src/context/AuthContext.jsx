@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import axios from "axios";
 import Cookies from "js-cookie";
-import { loginUser, registerUser } from "../services/authService";
+import { loginUser, registerUser, verifyAuth } from "../services/authService";
 
 const AuthContext = createContext();
 
@@ -17,32 +16,17 @@ export const AuthProvider = ({ children }) => {
       const accessToken = Cookies.get("accessToken");
       const refreshToken = Cookies.get("refreshToken");
 
-      console.log("Access Token:", accessToken); // Debugging line
-      console.log("Refresh Token:", refreshToken); // Debugging line
-
       if (!accessToken || !refreshToken) {
-        throw new Error("No tokens found");
+        setLoading(false);
+        return;
       }
 
-      const response = await axios.get("/auth/protected", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "x-refresh-token": refreshToken,
-        },
-      });
-
-      const newAccessToken = response.headers["x-access-token"];
-      if (newAccessToken) {
-        Cookies.set("accessToken", newAccessToken, {
-          expires: 15 / (24 * 60), // 15 minutes
-          secure: true,
-          sameSite: "strict",
-          path: "/",
-        });
+      const response = await verifyAuth(accessToken, refreshToken);
+      
+      if (response.user) {
+        setUser(response.user);
+        setIsAuthenticated(true);
       }
-
-      setUser(response.data.user);
-      setIsAuthenticated(true);
     } catch (error) {
       console.error("Token verification failed:", error);
       Cookies.remove("accessToken");
@@ -53,63 +37,35 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     verifyTokens();
   }, []);
 
   const login = async (email, password) => {
     try {
-      console.log("Logging in with:", { email, password }); // Log the credentials
-      const response = await loginUser({ email, password }); // Call loginUser  directly
-      console.log("Login response:", response); // Log the response
-
-      const { accessToken, refreshToken, user } = response; // Destructure the response
-
-      // Set cookies
-      Cookies.set("accessToken", accessToken, {
-        expires: 15 / (24 * 60),
-        secure: true,
-        sameSite: "strict",
-        path: "/",
-      });
-      Cookies.set("refreshToken", refreshToken, {
-        expires: 7,
-        secure: true,
-        sameSite: "strict",
-        path: "/",
-      });
-
-      // Update user state
-      setUser(user);
-      setIsAuthenticated(true);
+      const response = await loginUser({ email, password });
+      
+      if (response.user) {
+        setUser(response.user);
+        setIsAuthenticated(true);
+        return response;
+      }
     } catch (error) {
-      console.error("Login failed:", error); // Log the error
-      throw error; // Rethrow the error for handling in the component
+      console.error("Login failed:", error);
+      throw error;
     }
   };
 
   const register = async (username, email, password) => {
     try {
       const response = await registerUser({ username, email, password });
-      const { accessToken, refreshToken, user } = response;
-
-      // Set cookies
-      Cookies.set("accessToken", accessToken, {
-        expires: 15 / (24 * 60),
-        secure: true,
-        sameSite: "strict",
-        path: "/",
-      });
-      Cookies.set("refreshToken", refreshToken, {
-        expires: 7,
-        secure: true,
-        sameSite: "strict",
-        path: "/",
-      });
-
-      // Update user state
-      setUser(user);
-      setIsAuthenticated(true);
+      
+      if (response.user) {
+        setUser(response.user);
+        setIsAuthenticated(true);
+        return response;
+      }
     } catch (error) {
       console.error("Registration failed:", error);
       throw error;
@@ -117,8 +73,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    Cookies.remove("accessToken");
-    Cookies.remove("refreshToken");
+    Cookies.remove("accessToken", { path: "/" });
+    Cookies.remove("refreshToken", { path: "/" });
     setUser(null);
     setIsAuthenticated(false);
   };
