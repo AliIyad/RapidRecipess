@@ -1,34 +1,41 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import AuthModal from "../components/AuthModal";
-import { useNavigate } from "react-router-dom"; // Use Redirect to navigate the user if unauthenticated
+import { useNavigate } from "react-router-dom";
 
 const withAuth = (WrappedComponent) => {
   return function AuthenticatedComponent(props) {
     const navigate = useNavigate();
-    const { isAuthenticated, isLoading, verifyAuthState } = useAuth();
+    const { user, loading, isAuthenticated } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Handle auth state changes
     useEffect(() => {
-      if (!isAuthenticated && !isLoading) {
-        setIsModalOpen(true); // Open modal if not authenticated
-      } else {
-        setIsModalOpen(false); // Close modal if authenticated
+      if (!loading) {
+        if (!isAuthenticated) {
+          setIsModalOpen(true); // Show modal if not authenticated
+        } else {
+          setIsModalOpen(false); // Hide modal if authenticated
+        }
       }
-    }, [isAuthenticated, isLoading]);
+    }, [loading, isAuthenticated]);
 
-    if (isLoading) {
-      return <div>Loading...</div>; // Show loading screen while checking auth
-    }
+    // Handle modal close
+    const handleModalClose = () => {
+      setIsModalOpen(false);
+      if (!isAuthenticated) {
+        //navigate("/"); // Redirect to home if not authenticated
+      }
+    };
 
-    if (!isAuthenticated) {
-      return navigate("/"); // Redirect to homepage or login page if not authenticated
+    if (loading) {
+      return <div>Loading authentication status...</div>; // Show loading state
     }
 
     return (
       <>
-        <AuthModal isOpen={isModalOpen} toggleModal={setIsModalOpen} />
-        <WrappedComponent {...props} />
+        <AuthModal isOpen={isModalOpen} toggleModal={handleModalClose} />
+        {isAuthenticated ? <WrappedComponent {...props} /> : null}
       </>
     );
   };

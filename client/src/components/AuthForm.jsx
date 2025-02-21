@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
-
 import "../CSS/AuthForm.css";
 
 const AuthForm = ({ onSuccess }) => {

@@ -15,9 +15,16 @@ import {
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
+import { useAuth } from "../context/AuthContext";
+
 function Navi(args) {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const { user, logout } = useAuth();
+
+  const handlelogout = () => {
+    logout();
+  };
 
   const divStyle = {
     color: isHovered ? "#DB2626" : "#FFFFFF",
@@ -70,7 +77,9 @@ function Navi(args) {
                 <DropdownItem href='/profile'>Profile</DropdownItem>
                 <DropdownItem href='/services'>Services</DropdownItem>
                 <DropdownItem href='/settings'>Settings</DropdownItem>
-                <DropdownItem href='/logout'>Logout</DropdownItem>
+                <DropdownItem href={"/"} onClick={handlelogout}>
+                  Logout
+                </DropdownItem>
                 <DropdownItem divider />
               </DropdownMenu>
             </UncontrolledDropdown>

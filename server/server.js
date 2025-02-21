@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const dotenv = require("dotenv");
 const app = express();
+const cookieParser = require("cookie-parser");
 
 const connectDB = require("./src/config/db");
 const AuthRouter = require("./src/config/auth");
@@ -12,10 +13,11 @@ const corsOptions = {
   credentials: true,
 };
 
+app.use(express.json());
 connectDB();
 app.use(helmet());
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(cookieParser());
 
 dotenv.config();
 

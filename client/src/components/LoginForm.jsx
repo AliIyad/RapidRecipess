@@ -1,9 +1,13 @@
-// LoginForm.js
+import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { loginUser } from "../services/authService";
+import "../CSS/AuthForm.css";
+
 const LoginForm = ({ onSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const { login: loginUser } = useAuth();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -12,7 +16,7 @@ const LoginForm = ({ onSuccess }) => {
     try {
       const response = await loginUser(credentials);
       setMessage({ type: "success", text: response.message });
-      onSuccess(); // This will trigger the verification after successful login
+      onSuccess();
     } catch (error) {
       setMessage({ type: "error", text: error.message });
     }
