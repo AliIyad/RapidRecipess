@@ -13,7 +13,9 @@
 5. Create the friend system and the 1:1 chat between friends using websockets
 6. Flush out the recipe detail page and profile pages asap
 
-////
+////                \\\\
+FIX THE SEARCH FUNCTION
+////                 \\\\
 
 1. images importance for thje recipe platform
 2. rework search system to work on tags instead of ingredients
