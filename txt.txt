@@ -12,3 +12,13 @@
 4. Fully flesh out the backend along with routes and services
 5. Create the friend system and the 1:1 chat between friends using websockets
 6. Flush out the recipe detail page and profile pages asap
+
+////
+
+1. images importance for thje recipe platform
+2. rework search system to work on tags instead of ingredients
+2. recipes related to user/communities 
+3. Starter Page for tags and communities to limit recipe fetching instead of spilling them all at once
+4. Notification system
+5. CSS rework
+6. Basic Table-Based Admin Page

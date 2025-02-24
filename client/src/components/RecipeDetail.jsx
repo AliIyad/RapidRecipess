@@ -11,7 +11,7 @@ const RecipeDetail = ({ id }) => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const response = await axios.get(`http://localhost:6969/recipes/${id}`);
+        const response = await axios.get(`http://localhost:6969/recipe/${id}`);
         setRecipe(response.data);
       } catch (error) {
         console.error("Error fetching recipe:", error);
@@ -25,7 +25,7 @@ const RecipeDetail = ({ id }) => {
   }, [id]);
 
   if (loading) {
-    return <p>Loading recipe...</p>;
+    return <p className='text-muted'>Loading recipe details...</p>;
   }
 
   if (error) {
@@ -33,7 +33,11 @@ const RecipeDetail = ({ id }) => {
   }
 
   if (!recipe) {
-    return <p>Recipe not found</p>;
+    return (
+      <p className='text-danger'>
+        Recipe not found. Please check the recipe ID.
+      </p>
+    );
   }
 
   return (
@@ -52,8 +56,13 @@ const RecipeDetail = ({ id }) => {
             <strong>Ingredients:</strong> {recipe.ingredients.join(", ")}
           </CardText>
           <CardText>
-            <strong>Instructions:</strong> {recipe.steps.join("\n")}
+            <strong>Instructions:</strong>
           </CardText>
+          <ol>
+            {recipe.steps.map((step, index) => (
+              <li key={index}>{step}</li>
+            ))}
+          </ol>
           <CardText>
             <strong>Prep Time:</strong> {recipe.prepTime} minutes
           </CardText>

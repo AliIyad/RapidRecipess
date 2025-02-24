@@ -11,7 +11,6 @@ const RegisterForm = ({ onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const userData = { username, email, password };
-
     try {
       const response = await register(userData);
       setMessage({ type: "success", text: response.message });

@@ -1,4 +1,5 @@
 const Recipe = require("../models/recipe.model");
+const Interaction = require("../models/interaction.model");
 
 const getAllRecipes = async () => {
   try {

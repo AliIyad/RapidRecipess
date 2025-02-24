@@ -15,7 +15,7 @@ const RecipeDashboard = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:6969/recipes/paginated?limit=5&skip=${skip}`
+        `http://localhost:6969/recipe/paginated?limit=5&skip=${skip}`
       );
       const newRecipes = response.data;
 

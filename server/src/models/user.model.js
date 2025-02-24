@@ -2,13 +2,14 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true, required: true },
-  email: { type: String, unique: true, required: true },
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   verified: { type: Boolean, default: false },
-  profilePicture: String,
-  bio: String,
-  preferences: { type: Map, of: String },
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  createdAt: { type: Date, default: Date.now },
+  refreshToken: { type: String },
   notificationPreferences: {
     like: { type: Boolean, default: true },
     comment: { type: Boolean, default: true },
@@ -17,10 +18,6 @@ const userSchema = new mongoose.Schema({
     friendRequest: { type: Boolean, default: true },
     recipeUpdate: { type: Boolean, default: true },
   },
-  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  createdAt: { type: Date, default: Date.now },
-  refreshToken: { type: String },
 });
 
 userSchema.methods.comparePassword = async function (password) {

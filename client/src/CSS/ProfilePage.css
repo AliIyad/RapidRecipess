@@ -1,0 +1,85 @@
+.profile-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+  background-color: #f8f8f8;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-header {
+  background-color: #4b5e2dc4;
+  padding: 3.75rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  color: white;
+  margin-bottom: 40px;
+}
+
+.profile-header h1 {
+  font-size: 4rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.profile-header p {
+  font-size: 1.5rem;
+  font-weight: lighter;
+  margin-bottom: 20px;
+}
+
+.profile-section {
+  background-color: #ffffff;
+  padding: 40px 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+}
+
+.profile-section h2 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #4b5e2dc4;
+}
+
+.profile-section ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.profile-section ul li {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.profile-section p {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.profile-section .stats {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.profile-section .stats p {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #4b5e2dc4;
+}
+
+.profile-section .account-info {
+  text-align: left;
+  margin-top: 20px;
+}
+
+.profile-section .account-info p {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 10px;
+}

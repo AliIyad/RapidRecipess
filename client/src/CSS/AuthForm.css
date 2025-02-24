@@ -21,6 +21,7 @@
   box-sizing: border-box;
   transition: border 0.3s ease-in-out;
   background-color: #f8f8f8;
+  color: #333;
 }
 
 .auth-form-container input:focus {

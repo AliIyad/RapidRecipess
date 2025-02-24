@@ -85,7 +85,7 @@ const RecipeComments = ({ recipeId }) => {
 
       {/* Display comments */}
       {loading ? (
-        <p>Loading comments...</p>
+        <p className='text-muted'>Loading comments...</p>
       ) : comments.length > 0 ? (
         comments.map((comment) => (
           <Card key={comment._id} className='mb-3'>

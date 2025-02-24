@@ -45,10 +45,33 @@ const deleteUser = async (userId) => {
   }
 };
 
+const updateNotificationPreferences = async (
+  userId,
+  notificationPreferences
+) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { notificationPreferences }, // Update only the notificationPreferences field
+      { new: true } // Return the updated document
+    );
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return user;
+  } catch (error) {
+    console.error("Error in updateNotificationPreferences:", error.message);
+    throw new Error("Error updating notification preferences");
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
+  updateNotificationPreferences,
 };

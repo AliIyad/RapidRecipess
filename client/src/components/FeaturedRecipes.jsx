@@ -10,14 +10,37 @@ const FeaturedRecipesCarousel = ({ recipes }) => {
     setActiveIndex((prev) => (prev === 0 ? recipes.length - 1 : prev - 1));
 
   return (
-    <Carousel showThumbs={false} showStatus={false} selectedItem={activeIndex}>
-      {recipes.map((recipe, index) => (
-        <div key={index}>
-          <img src={recipe.imageUrl} alt={recipe.name} />
-          <p className='legend'>{recipe.name}</p>
-        </div>
-      ))}
-    </Carousel>
+    <div className='featured-recipes-carousel'>
+      <Carousel
+        showThumbs={false}
+        showStatus={false}
+        selectedItem={activeIndex}
+        onChange={(index) => setActiveIndex(index)}
+        infiniteLoop={true}
+        autoPlay={true}
+        interval={5000}
+        stopOnHover={true}>
+        {recipes.map((recipe, index) => (
+          <div key={index} className='carousel-slide'>
+            <img
+              src={recipe.imageUrl}
+              alt={recipe.name}
+              className='carousel-image'
+            />
+            <p className='legend'>{recipe.name}</p>
+          </div>
+        ))}
+      </Carousel>
+
+      <div className='carousel-controls'>
+        <button onClick={previous} className='carousel-button'>
+          Previous
+        </button>
+        <button onClick={next} className='carousel-button'>
+          Next
+        </button>
+      </div>
+    </div>
   );
 };
 

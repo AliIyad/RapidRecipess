@@ -6,19 +6,25 @@ import { useNavigate } from "react-router-dom";
 const withAuth = (WrappedComponent) => {
   return function AuthenticatedComponent(props) {
     const navigate = useNavigate();
-    const { user, loading, isAuthenticated } = useAuth();
+    const { user, loading, setLoading, isAuthenticated, verifyTokens } =
+      useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Handle auth state changes
+    useEffect(() => {
+      verifyTokens();
+    }, []);
+
     useEffect(() => {
       if (!loading) {
         if (!isAuthenticated) {
-          setIsModalOpen(true); // Show modal if not authenticated
+          setTimeout(() => {
+            setIsModalOpen(true); // Show modal if not authenticated
+          }, 500); // Add a 500ms delay
         } else {
           setIsModalOpen(false); // Hide modal if authenticated
         }
       }
-    }, [loading, isAuthenticated]);
+    }, [loading, isAuthenticated, user]);
 
     // Handle modal close
     const handleModalClose = () => {

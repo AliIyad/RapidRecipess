@@ -9,10 +9,10 @@ const RecipePage = () => {
   const { id } = useParams(); // Extract the `id` parameter from the URL
 
   return (
-    <>
+    <div className='recipe-page'>
       <RecipeDetail id={id} /> {/* Pass the `id` as a prop */}
       <RecipeComments recipeId={id} /> {/* Add the RecipeComments component */}
-    </>
+    </div>
   );
 };
 

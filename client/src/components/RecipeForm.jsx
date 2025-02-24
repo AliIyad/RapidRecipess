@@ -28,6 +28,7 @@ const RecipeForm = ({ setRecipes }) => {
     e.preventDefault();
     let validationFeedback = "";
 
+    // Validation
     if (!recipeName || !ingredients || !instructions || !prepTime) {
       validationFeedback = "Please fill out all required fields.";
     } else if (prepTime < 1) {
@@ -44,12 +45,14 @@ const RecipeForm = ({ setRecipes }) => {
     } else {
       const newRecipe = {
         name: recipeName,
-        ingredients,
-        instructions,
-        prepTime,
+        ingredients: ingredients
+          .split(",")
+          .map((ingredient) => ingredient.trim()), // Convert to array
+        instructions: instructions.split("\n"), // Convert to array
+        prepTime: parseInt(prepTime, 10),
         image: recipeImage ? URL.createObjectURL(recipeImage) : null,
         likes: 0, // Default like count
-        comments: 0, // Default comment count
+        comments: [], // Default empty comments array
       };
 
       // Send the new recipe to the backend
@@ -58,19 +61,22 @@ const RecipeForm = ({ setRecipes }) => {
         .then((response) => {
           setRecipes((prevRecipes) => [response.data, ...prevRecipes]);
           setFeedback("Thank you! Your recipe has been submitted.");
+          resetForm();
         })
         .catch((error) => {
           setFeedback("There was an error submitting your recipe.");
           console.error(error);
         });
-
-      setRecipeName("");
-      setIngredients("");
-      setInstructions("");
-      setPrepTime("");
-      setRecipeImage(null);
-      setTimeout(() => setIsFormVisible(false), 2000);
     }
+  };
+
+  const resetForm = () => {
+    setRecipeName("");
+    setIngredients("");
+    setInstructions("");
+    setPrepTime("");
+    setRecipeImage(null);
+    setTimeout(() => setIsFormVisible(false), 2000);
   };
 
   return (
@@ -88,24 +94,84 @@ const RecipeForm = ({ setRecipes }) => {
 
       {isFormVisible && (
         <Form onSubmit={handleFormSubmit} className='recipe-form'>
-          {/* Form Inputs */}
-          <Button
-            type='submit'
-            color='success'
-            block
-            className='buttons-container'>
+          {/* Recipe Name */}
+          <FormGroup>
+            <Label for='recipeName'>Recipe Name</Label>
+            <Input
+              type='text'
+              id='recipeName'
+              value={recipeName}
+              onChange={(e) => setRecipeName(e.target.value)}
+              placeholder='Enter recipe name'
+              required
+            />
+          </FormGroup>
+
+          {/* Ingredients */}
+          <FormGroup>
+            <Label for='ingredients'>Ingredients</Label>
+            <Input
+              type='textarea'
+              id='ingredients'
+              value={ingredients}
+              onChange={(e) => setIngredients(e.target.value)}
+              placeholder='Enter ingredients (comma-separated)'
+              required
+            />
+          </FormGroup>
+
+          {/* Instructions */}
+          <FormGroup>
+            <Label for='instructions'>Instructions</Label>
+            <Input
+              type='textarea'
+              id='instructions'
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder='Enter instructions (one step per line)'
+              required
+            />
+          </FormGroup>
+
+          {/* Preparation Time */}
+          <FormGroup>
+            <Label for='prepTime'>Preparation Time (minutes)</Label>
+            <Input
+              type='number'
+              id='prepTime'
+              value={prepTime}
+              onChange={(e) => setPrepTime(e.target.value)}
+              placeholder='Enter preparation time'
+              min='1'
+              required
+            />
+          </FormGroup>
+
+          {/* Recipe Image */}
+          <FormGroup>
+            <Label for='recipeImage'>Recipe Image</Label>
+            <Input
+              type='file'
+              id='recipeImage'
+              onChange={(e) => setRecipeImage(e.target.files[0])}
+              accept='image/jpeg, image/png, image/gif'
+            />
+          </FormGroup>
+
+          {/* Buttons */}
+          <Button type='submit' color='success' className='buttons-container'>
             Submit Recipe
           </Button>
 
           <Button
             type='button'
             color='danger'
-            block
             className='buttons-container'
             onClick={() => setIsFormVisible(false)}>
             Cancel
           </Button>
 
+          {/* Feedback Message */}
           {feedback && (
             <Alert
               color={feedback.includes("Thank you") ? "success" : "danger"}

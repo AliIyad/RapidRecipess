@@ -45,10 +45,29 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const updateNotificationPreferences = async (req, res) => {
+  try {
+    const user = await userService.updateNotificationPreferences(
+      req.params.id,
+      req.body.notificationPreferences
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in updateNotificationPreferences:", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
+  updateNotificationPreferences,
 };

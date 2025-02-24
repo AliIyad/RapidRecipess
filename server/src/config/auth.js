@@ -20,7 +20,7 @@ router.post("/register", async (req, res) => {
     const user = await User.findOne({ email: email });
 
     if (user)
-      return res.status(500).json({
+      return res.status(400).json({
         message: "User Already Exists, Try logging in. 👌🏼",
         type: "warning",
       });
@@ -32,14 +32,13 @@ router.post("/register", async (req, res) => {
       password: passwordHash,
     });
 
-    const accessToken = createAccessToken({ id: newUser._id });
-    const refreshToken = createRefreshToken({ id: newUser._id });
+    const accessToken = createAccessToken(newUser._id);
+    const refreshToken = createRefreshToken(newUser._id);
 
     newUser.refreshToken = refreshToken;
-    newUser.accessToken = accessToken;
-
     await newUser.save();
 
+    // Set tokens in cookies
     sendRefreshToken(res, refreshToken);
     sendAccessToken(res, accessToken);
 
@@ -51,14 +50,12 @@ router.post("/register", async (req, res) => {
         email: newUser.email,
         username: newUser.username,
       },
-      accessToken: accessToken,
-      refreshToken: refreshToken,
     });
   } catch (error) {
     res.status(500).json({
       type: "error",
       message: "Error creating user! 🤯",
-      error: error,
+      error: error.message,
     });
   }
 });
@@ -68,27 +65,28 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email: email });
     if (!user)
-      return res.status(500).json({
+      return res.status(401).json({
         type: "error",
         message: "User does not exist! 👀",
       });
 
     const passwordMatch = await user.comparePassword(password);
     if (!passwordMatch)
-      return res.status(500).json({
+      return res.status(401).json({
         type: "error",
         message: "Incorrect password! 🤫",
       });
 
-    const accessToken = createAccessToken({ id: user._id });
-    const refreshToken = createRefreshToken({ id: user._id });
+    const accessToken = createAccessToken(user._id);
+    const refreshToken = createRefreshToken(user._id);
 
     user.refreshToken = refreshToken;
-    user.accessToken = accessToken;
     await user.save();
 
+    // Set tokens in cookies
     sendRefreshToken(res, refreshToken);
     sendAccessToken(res, accessToken);
+
     res.status(200).json({
       message: "Login successful! 🎉",
       type: "success",
@@ -97,101 +95,98 @@ router.post("/login", async (req, res) => {
         email: user.email,
         username: user.username,
       },
-      accessToken: accessToken,
-      refreshToken: refreshToken,
     });
   } catch (error) {
     res.status(500).json({
       type: "error",
       message: "Error logging in! 🤯",
-      error: error,
+      error: error.message,
     });
   }
 });
 
 router.post("/logout", async (req, res) => {
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
-  res.status(200).json({ message: "Logged out successfully" });
+  res.clearCookie("accessToken", { path: "/" });
+  res.clearCookie("refreshToken", { path: "/" });
+  res.status(200).json({
+    message: "Logged out successfully",
+    type: "success",
+  });
 });
 
 router.post("/refresh_token", async (req, res) => {
   try {
-    const { refreshtoken } = req.cookies;
-    if (!refreshtoken)
-      return res.status(500).json({
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({
         message: "No refresh token found! 🤫",
-        type: "error",
-      });
-
-    let id;
-    try {
-      id = verify(refreshtoken, process.env.REFRESH_TOKEN_SECRET).id;
-    } catch (error) {
-      return res.status(500).json({
-        message: "You are not authenticated! 🤫",
         type: "error",
       });
     }
 
-    if (!id)
-      return res.status(500).json({
+    let payload;
+    try {
+      payload = verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    } catch (error) {
+      return res.status(401).json({
         message: "Invalid refresh token! 🤫",
         type: "error",
       });
+    }
 
-    const user = await User.findOne({ _id: id });
-
-    if (!user)
-      return res.status(500).json({
+    const user = await User.findById(payload.id);
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(401).json({
         message: "Invalid refresh token! 🤫",
         type: "error",
       });
+    }
 
-    if (user.refreshtoken !== refreshtoken)
-      return res.status(500).json({
-        message: "Invalid refresh token! 🤫",
-        type: "error",
-      });
+    const newAccessToken = createAccessToken(user._id);
+    const newRefreshToken = createRefreshToken(user._id);
 
-    const accessToken = createAccessToken(user._id);
-    const refreshToken = createRefreshToken(user._id);
+    user.refreshToken = newRefreshToken;
+    await user.save();
 
-    user.refreshtoken = refreshToken;
+    sendRefreshToken(res, newRefreshToken);
+    sendAccessToken(res, newAccessToken);
 
-    sendRefreshToken(res, refreshToken);
-    return res.json({
-      message: "Refreshed successfully! 👏🏼",
+    res.json({
+      message: "Tokens refreshed successfully! 👏🏼",
       type: "success",
-      accessToken,
     });
   } catch (error) {
     res.status(500).json({
       type: "error",
       message: "Error refreshing token! 💀",
-      error: error,
+      error: error.message,
     });
   }
 });
 
 router.get("/protected", protect, async (req, res) => {
   try {
-    if (req.user)
-      return res.json({
-        message: "You're Logged in!",
+    if (!req.user) {
+      return res.status(401).json({
+        message: "You are not logged in.",
         type: "error",
-        user: req.user,
       });
+    }
 
-    return res.status(500).json({
-      message: "You are not logged in.",
-      type: "error",
+    res.json({
+      message: "You're logged in!",
+      type: "success",
+      user: {
+        id: req.user._id,
+        email: req.user.email,
+        username: req.user.username,
+      },
     });
   } catch (error) {
     res.status(500).json({
       type: "error",
-      message: "Error getting protected route",
-      error,
+      message: "Error accessing protected route",
+      error: error.message,
     });
   }
 });
