@@ -3,7 +3,7 @@ const Interaction = require("../models/interaction.model");
 
 const getAllRecipes = async () => {
   try {
-    const recipes = await Recipe.find().populate("user");
+    const recipes = await Recipe.find().populate("user").populate("tags");
     if (!recipes) {
       throw new Error("No recipes found");
     }
@@ -20,7 +20,8 @@ const createRecipe = async (recipeData) => {
     await recipe.save();
     return recipe;
   } catch (error) {
-    throw new Error("Error creating recipe");
+    console.error("Error creating recipe in DB:", error.message); // Log the error
+    throw new Error(`Error creating recipe: ${error.message}`); // Include the original error message
   }
 };
 

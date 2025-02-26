@@ -18,6 +18,13 @@ const userSchema = new mongoose.Schema({
     friendRequest: { type: Boolean, default: true },
     recipeUpdate: { type: Boolean, default: true },
   },
+  notifications: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "Notification" },
+  ],
+  recipes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Recipe" }],
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
+  interactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Interaction" }],
+  prefferredTags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag" }],
 });
 
 userSchema.methods.comparePassword = async function (password) {

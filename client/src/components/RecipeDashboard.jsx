@@ -11,6 +11,7 @@ const RecipeDashboard = () => {
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
+  // Fetch recipes
   const fetchRecipes = async () => {
     setLoading(true);
     try {
@@ -22,7 +23,24 @@ const RecipeDashboard = () => {
       if (newRecipes.length === 0) {
         setHasMore(false); // No more recipes to load
       } else {
-        setRecipes((prevRecipes) => [...prevRecipes, ...newRecipes]);
+        // Fetch interaction counts for each recipe
+        const recipesWithInteractions = await Promise.all(
+          newRecipes.map(async (recipe) => {
+            const interactionResponse = await axios.get(
+              `/interaction/count/recipe/${recipe._id}`
+            );
+            return {
+              ...recipe,
+              likeCount: interactionResponse.data.likes,
+              dislikeCount: interactionResponse.data.dislikes,
+            };
+          })
+        );
+
+        setRecipes((prevRecipes) => [
+          ...prevRecipes,
+          ...recipesWithInteractions,
+        ]);
         setSkip((prevSkip) => prevSkip + newRecipes.length);
       }
     } catch (error) {
@@ -52,7 +70,7 @@ const RecipeDashboard = () => {
               <Link to={`/recipe/${recipe._id}`} className='recipe-link'>
                 <Card className='recipe-card'>
                   <img
-                    src={recipe.image || "https://via.placeholder.com/150"}
+                    src={recipe.imageUrl || "https://via.placeholder.com/150"}
                     alt={recipe.title}
                     className='recipe-card-image'
                   />
@@ -65,19 +83,19 @@ const RecipeDashboard = () => {
                     <CardText>
                       <strong>Prep Time:</strong> {recipe.prepTime} minutes
                     </CardText>
+                    <CardText>
+                      <strong>Tags:</strong>{" "}
+                      {recipe.tags.map((tag) => {
+                        tag;
+                      })}
+                    </CardText>
                     <div className='interaction-meters'>
-                      <Button
-                        outline
-                        color='primary'
-                        className='interaction-button'>
-                        {recipe.likes} Likes
-                      </Button>
-                      <Button
-                        outline
-                        color='secondary'
-                        className='interaction-button'>
-                        {recipe.comments.length} Comments
-                      </Button>
+                      <p>
+                        <strong>Likes:</strong> {recipe.likeCount || 0}
+                      </p>
+                      <p>
+                        <strong>Dislikes:</strong> {recipe.dislikeCount || 0}
+                      </p>
                     </div>
                   </CardBody>
                 </Card>

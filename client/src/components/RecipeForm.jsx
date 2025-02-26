@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Form,
@@ -10,6 +10,8 @@ import {
 } from "reactstrap";
 import axios from "axios";
 import "../CSS/RecipeForm.css";
+import { useAuth } from "../context/AuthContext";
+import api from "../services/authService";
 
 const RecipeForm = ({ setRecipes }) => {
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -17,56 +19,78 @@ const RecipeForm = ({ setRecipes }) => {
   const [ingredients, setIngredients] = useState("");
   const [instructions, setInstructions] = useState("");
   const [prepTime, setPrepTime] = useState("");
+  const [cookTime, setCookTime] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+  const [tags, setTags] = useState("");
   const [recipeImage, setRecipeImage] = useState(null);
   const [feedback, setFeedback] = useState("");
+  const { user, isAuthenticated, loading } = useAuth();
+  const [userData, setUserData] = useState(null);
+
+  const data = userData ? JSON.stringify(userData) : null;
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      axios
+        .get(`http://localhost:6969/users/${user.id}`)
+        .then((response) => {
+          setUserData(response.data);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  }, [isAuthenticated, user.id]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <div>You are not logged in</div>;
+  }
 
   const handleInputFocus = () => {
     setIsFormVisible(true);
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    let validationFeedback = "";
 
-    // Validation
-    if (!recipeName || !ingredients || !instructions || !prepTime) {
-      validationFeedback = "Please fill out all required fields.";
-    } else if (prepTime < 1) {
-      validationFeedback = "Preparation time must be at least 1 minute.";
-    } else if (
-      recipeImage &&
-      !["image/jpeg", "image/png", "image/gif"].includes(recipeImage.type)
-    ) {
-      validationFeedback = "Please upload a valid image file (jpg, png, gif).";
+    if (!isAuthenticated) {
+      setFeedback("Please log in to submit a recipe.");
+      return;
     }
 
-    if (validationFeedback) {
-      setFeedback(validationFeedback);
-    } else {
-      const newRecipe = {
-        name: recipeName,
-        ingredients: ingredients
-          .split(",")
-          .map((ingredient) => ingredient.trim()), // Convert to array
-        instructions: instructions.split("\n"), // Convert to array
-        prepTime: parseInt(prepTime, 10),
-        image: recipeImage ? URL.createObjectURL(recipeImage) : null,
-        likes: 0, // Default like count
-        comments: [], // Default empty comments array
-      };
+    // Create FormData object
+    const formData = new FormData();
+    formData.append("title", recipeName);
+    formData.append("ingredients", ingredients);
+    formData.append("steps", instructions);
+    formData.append("prepTime", prepTime);
+    formData.append("cookTime", cookTime);
+    formData.append("difficulty", difficulty.toLocaleLowerCase());
+    formData.append("tags", tags);
+    if (recipeImage) {
+      formData.append("image", recipeImage);
+    }
 
-      // Send the new recipe to the backend
-      axios
-        .post("http://localhost:6969/recipes", newRecipe)
-        .then((response) => {
-          setRecipes((prevRecipes) => [response.data, ...prevRecipes]);
-          setFeedback("Thank you! Your recipe has been submitted.");
-          resetForm();
-        })
-        .catch((error) => {
-          setFeedback("There was an error submitting your recipe.");
-          console.error(error);
-        });
+    // Send the new recipe to the backend
+    try {
+      const response = await api.post("/recipe", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setRecipes((prevRecipes) => [response.data, ...prevRecipes]);
+      setFeedback("Thank you! Your recipe has been submitted.");
+      resetForm();
+    } catch (error) {
+      setFeedback(
+        error.response?.data?.message ||
+          "There was an error submitting your recipe."
+      );
+      console.error("Error submitting recipe:", error);
     }
   };
 
@@ -75,6 +99,9 @@ const RecipeForm = ({ setRecipes }) => {
     setIngredients("");
     setInstructions("");
     setPrepTime("");
+    setCookTime("");
+    setDifficulty("");
+    setTags("");
     setRecipeImage(null);
     setTimeout(() => setIsFormVisible(false), 2000);
   };
@@ -146,6 +173,44 @@ const RecipeForm = ({ setRecipes }) => {
               required
             />
           </FormGroup>
+          {/* Cooking Time */}
+          <FormGroup>
+            <Label for='cookTime'>Cooking Time (minutes)</Label>
+            <Input
+              type='number'
+              id='cookTime'
+              value={cookTime}
+              onChange={(e) => setCookTime(e.target.value)}
+              placeholder='Enter cooking time'
+              min='1'
+            />
+          </FormGroup>
+
+          {/* Difficulty */}
+          <FormGroup>
+            <Label for='difficulty'>Difficulty</Label>
+            <Input
+              type='select'
+              id='difficulty'
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}>
+              <option value='easy'>Easy</option>
+              <option value='medium'>Medium</option>
+              <option value='hard'>Hard</option>
+            </Input>
+          </FormGroup>
+
+          {/* Tags */}
+          <FormGroup>
+            <Label for='tags'>Tags</Label>
+            <Input
+              type='text'
+              id='tags'
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder='Enter tags (comma-separated)'
+            />
+          </FormGroup>
 
           {/* Recipe Image */}
           <FormGroup>
@@ -154,8 +219,11 @@ const RecipeForm = ({ setRecipes }) => {
               type='file'
               id='recipeImage'
               onChange={(e) => setRecipeImage(e.target.files[0])}
-              accept='image/jpeg, image/png, image/gif'
+              accept='image/jpeg, image/png'
             />
+            <small className='text-muted'>
+              Upload a JPG or PNG file (max 5MB).
+            </small>
           </FormGroup>
 
           {/* Buttons */}

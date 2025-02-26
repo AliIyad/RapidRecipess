@@ -2,21 +2,24 @@ const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema({
   content: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now },
-  parentCommentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Comment",
-    default: null,
-  },
-  recipe: {
+  recipeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Recipe",
     required: true,
   },
-  Interactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Interaction" }],
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  parentCommentId: { type: mongoose.Schema.Types.ObjectId, ref: "Comment" },
+  Interactions: [
+    {
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      reactionType: { type: String, enum: ["like", "dislike"], required: true },
+    },
+  ],
+  createdAt: { type: Date, default: Date.now },
 });
 
-const Comment = mongoose.model("Comment", commentSchema);
-
-module.exports = Comment;
+module.exports = mongoose.model("Comment", commentSchema);

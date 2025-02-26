@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Input,
   Collapse,
@@ -16,25 +16,19 @@ import {
 } from "reactstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
 
 function Navi(args) {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [recipes, setRecipes] = useState([]);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const handleSearch = async () => {
-    try {
-      const response = await axios.get(
-        `http://localhost:6969/recipes/ingredient/${searchTerm}`
+  const handleSearch = () => {
+    if (searchTerm.trim()) {
+      navigate(
+        `/search?query=${encodeURIComponent(searchTerm)}&type=ingredient`
       );
-      setRecipes(response.data);
-    } catch (error) {
-      console.error("Error searching recipes:", error);
-      setError("Failed to search recipes. Please try again later.");
     }
   };
 
@@ -113,7 +107,7 @@ function Navi(args) {
           <div className='navbar-search'>
             <Input
               type='text'
-              placeholder='Search by ingredient...'
+              placeholder='Search...'
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className='search-input'

@@ -4,7 +4,14 @@ const commentService = require("../services/comment.services");
 const createComment = async (req, res) => {
   try {
     const { content, recipeId, parentCommentId } = req.body;
-    const userId = req.user._id; // Assuming user ID is available in the request
+    const userId = req.user._id; // Get user ID from req.user
+
+    console.log("Creating comment with data:", {
+      content,
+      recipeId,
+      userId,
+      parentCommentId,
+    }); // Debugging
 
     const comment = await commentService.createComment(
       content,
@@ -14,8 +21,8 @@ const createComment = async (req, res) => {
     );
     res.status(201).json(comment);
   } catch (error) {
-    console.error("Error creating comment:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Error creating comment:", error); // Debugging
+    res.status(500).json({ message: error.message || "Internal server error" });
   }
 };
 
@@ -23,11 +30,15 @@ const createComment = async (req, res) => {
 const getCommentsByRecipe = async (req, res) => {
   try {
     const { recipeId } = req.params;
+    console.log("Fetching comments for recipe ID:", recipeId); // Debugging
+
     const comments = await commentService.getCommentsByRecipe(recipeId);
+    console.log("Comments fetched:", comments); // Debugging
+
     res.status(200).json(comments);
   } catch (error) {
-    console.error("Error fetching comments:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Error fetching comments:", error); // Debugging
+    res.status(500).json({ message: error.message || "Internal server error" });
   }
 };
 
@@ -35,7 +46,13 @@ const getCommentsByRecipe = async (req, res) => {
 const addInteractionToComment = async (req, res) => {
   try {
     const { commentId, reactionType } = req.body;
-    const userId = req.user._id; // Assuming user ID is available in the request
+    const userId = req.user._id; // Get user ID from req.user
+
+    console.log("Adding interaction with data:", {
+      commentId,
+      userId,
+      reactionType,
+    }); // Debugging
 
     const interaction = await commentService.addInteractionToComment(
       commentId,
@@ -44,8 +61,8 @@ const addInteractionToComment = async (req, res) => {
     );
     res.status(201).json(interaction);
   } catch (error) {
-    console.error("Error adding interaction:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Error adding interaction:", error); // Debugging
+    res.status(500).json({ message: error.message || "Internal server error" });
   }
 };
 

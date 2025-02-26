@@ -1,26 +1,38 @@
 **Issues**
 
-1. Redirecting is indiscriminate whether registered or not
-2. Modal is persistent despite having tokens logged and stored in cookies
-3. Activity is hindered by modal being improperly implemented
+1. Redirecting is indiscriminate whether registered or not✔️
+2. Modal is persistent despite having tokens logged and stored in cookies✔️
+3. Activity is hindered by modal being improperly implemented✔️
 
 **Fixes for Next Session**
 
-1. Fix the modal from the very root of the cause
-2. Remake the interaction if need be
-3. Put aside the modal and focus on making dummy data and fetching it to the front end
-4. Fully flesh out the backend along with routes and services
-5. Create the friend system and the 1:1 chat between friends using websockets
-6. Flush out the recipe detail page and profile pages asap
+1. Fix the modal from the very root of the cause✔️
+2. Remake the interaction if need be✔️
+3. Put aside the modal and focus on making dummy data and fetching it to the front end✔️
+4. Fully flesh out the backend along with routes and services⭕
+5. Create the friend system and the 1:1 chat between friends using websockets⭕
+6. Flush out the recipe detail page and profile pages asap✔️
 
-////                \\\\
-FIX THE SEARCH FUNCTION
-////                 \\\\
+////                     \\\\
+⚠️ FIX THE SEARCH FUNCTION ⚠️
+////                      \\\\
 
-1. images importance for thje recipe platform
-2. rework search system to work on tags instead of ingredients
-2. recipes related to user/communities 
-3. Starter Page for tags and communities to limit recipe fetching instead of spilling them all at once
-4. Notification system
-5. CSS rework
-6. Basic Table-Based Admin Page
+1. images importance for thje recipe platform ✔️
+2. Featured Recipes ✔️
+3. rework search system to work on tags instead of ingredients ⭕
+4. recipes related to user/communities ⭕
+5. Starter Page for tags and communities to limit recipe fetching instead of spilling them all at once ⭕
+6. Notification system ❌
+7. CSS rework ⏳
+8. Basic Table-Based Admin Page ⏳
+
+///                      \\\
+⚠️ FIX UP THE SEARCH FLOW ⚠️
+///                       \\\
+
+1. Rework the search functions once all query flows are set in place
+2. Rework the Starter page to have the tags once the flow is set in place
+3. Relate the user recipes with the user themselves in their profile page
+4. add the ability for the user to upload profile picturs
+5. CSS REWORK 
+6. Basic Table based admin page

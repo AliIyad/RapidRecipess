@@ -11,6 +11,7 @@ const User = require("../models/user.model.js");
 const Recipe = require("../models/recipe.model.js");
 const Comment = require("../models/comment.model.js");
 const Interaction = require("../models/interaction.model.js");
+const Tag = require("../models/tag.model.js"); // Import Tag model
 const Notification = require("../models/notification.model.js");
 const Message = require("../models/message.model.js");
 const Friend = require("../models/friend.model.js");
@@ -24,6 +25,7 @@ const NUM_MESSAGES = 400;
 const NUM_NOTIFICATIONS = 300;
 const NUM_INTERACTIONS = 600;
 const NUM_CHATROOMS = 50;
+const NUM_TAGS = 20; // Number of unique tags to create
 
 const seedDatabase = async () => {
   try {
@@ -42,6 +44,7 @@ const seedDatabase = async () => {
       Recipe.deleteMany(),
       Comment.deleteMany(),
       Interaction.deleteMany(),
+      Tag.deleteMany(), // Clear existing tags
       Notification.deleteMany(),
       Message.deleteMany(),
       Friend.deleteMany(),
@@ -65,19 +68,29 @@ const seedDatabase = async () => {
 
     console.log("Users seeded");
 
+    // Create Tags
+    const tags = await Tag.insertMany(
+      Array.from({ length: NUM_TAGS }, () => ({
+        name: faker.lorem.word(), // Generate unique tag names
+      }))
+    );
+
+    console.log("Tags seeded");
+
     // Create Recipes
     const recipes = await Recipe.insertMany(
       Array.from({ length: NUM_RECIPES }, () => ({
-        title: faker.commerce.productName(),
-        ingredients: Array.from({ length: 5 }, () =>
-          faker.commerce.productName()
-        ), // Generate random ingredient names
+        title: faker.lorem.words(3), // Generate a random recipe title
+        ingredients: Array.from({ length: 5 }, () => faker.lorem.word()), // Generate random ingredient names
         steps: faker.lorem.sentences(3),
         prepTime: faker.number.int({ min: 5, max: 60 }),
         cookTime: faker.number.int({ min: 10, max: 120 }),
-        difficulty: faker.helpers.arrayElement(["Easy", "Medium", "Hard"]),
-        tags: faker.lorem.words(3).split(" "),
+        difficulty: faker.helpers
+          .arrayElement(["Easy", "Medium", "Hard"])
+          .toLocaleLowerCase(),
+        tags: faker.helpers.arrayElements(tags, { min: 1, max: 5 }), // Assign 1-5 random tags to each recipe
         user: users[Math.floor(Math.random() * users.length)]._id,
+        imageUrl: faker.image.urlLoremFlickr({ category: "food" }), // Generate realistic food images
       }))
     );
 
@@ -92,8 +105,8 @@ const seedDatabase = async () => {
 
         return {
           content: faker.lorem.sentence(),
-          recipe: randomRecipe._id, // Randomly assign to a recipe
-          user: randomUser._id, // Randomly assign to a user
+          recipeId: randomRecipe._id, // Randomly assign to a recipe
+          userId: randomUser._id, // Randomly assign to a user
           timestamp: faker.date.past(),
         };
       })
@@ -101,17 +114,23 @@ const seedDatabase = async () => {
 
     console.log("Comments seeded");
 
-    // Create Interactions for Comments
+    // Create Interactions for Recipes and Comments
     await Interaction.insertMany(
       Array.from({ length: NUM_INTERACTIONS }, () => {
-        const randomComment =
-          comments[Math.floor(Math.random() * comments.length)];
+        const randomContentType = faker.helpers.arrayElement([
+          "recipe",
+          "comment",
+        ]);
+        const randomContent =
+          randomContentType === "recipe"
+            ? recipes[Math.floor(Math.random() * recipes.length)]
+            : comments[Math.floor(Math.random() * comments.length)];
         const randomUser = users[Math.floor(Math.random() * users.length)];
 
         return {
           user: randomUser._id,
-          contentType: "comment",
-          contentId: randomComment._id,
+          contentType: randomContentType,
+          contentId: randomContent._id,
           reactionType: faker.helpers.arrayElement(["like", "dislike"]),
           createdAt: faker.date.past(),
         };

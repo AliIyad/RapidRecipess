@@ -59,3 +59,15 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+.interaction-meters {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.interaction-meters p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+}

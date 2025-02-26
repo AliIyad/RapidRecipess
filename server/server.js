@@ -8,6 +8,8 @@ const AuthRouter = require("./src/config/auth");
 const RecipeRouter = require("./src/routers/recipe.routes");
 const UserRouter = require("./src/routers/user.routes");
 const CommentRouter = require("./src/routers/comment.routes");
+const InteractionRouter = require("./src/routers/interaction.routes");
+const { protect } = require("./src/utils/protected");
 
 // Load environment variables
 dotenv.config();
@@ -19,20 +21,17 @@ const corsOptions = {
   origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-refresh-token"],
+  allowedHeaders: ["Authorization", "Content-Type", "x-refresh-token"],
   exposedHeaders: ["x-access-token"],
 };
 
-// Middleware
 app.use(cors(corsOptions));
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
-// Connect to MongoDB
 connectDB();
 
-// Routes
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -41,17 +40,22 @@ app.get("/health", (req, res) => {
   res.status(200).send("Healthy");
 });
 
-// Auth routes
 app.use("/auth", AuthRouter);
-
-// Recipe routes
 app.use("/recipe", RecipeRouter);
-
-// User routes
 app.use("/users", UserRouter);
-
-// Comment routes
 app.use("/comments", CommentRouter);
+app.use("/interaction", InteractionRouter);
+app.get("/protected", protect, (req, res) => {
+  res.json({
+    message: "You're logged in!",
+    type: "success",
+    user: {
+      id: req.user._id,
+      email: req.user.email,
+      username: req.user.username,
+    },
+  });
+});
 
 // Start server
 const PORT = process.env.PORT || 6969;

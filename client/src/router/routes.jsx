@@ -10,6 +10,8 @@ import RecipePage from "../pages/RecipePage";
 import Profile from "../pages/ProfilePage";
 import Settings from "../pages/SettingsPage";
 import Community from "../pages/CommunityPage";
+import SearchPage from "../pages/SearchPage";
+import StarterPage from "../pages/StarterPage";
 
 import Layout from "../components/Layout";
 import withAuth from "../services/withAuth";
@@ -36,6 +38,8 @@ const Router = () => {
           <Route path='/recipe/:id' element={<ProtectedRecipePage />} />
           <Route path='/profile' element={<ProtectedProfile />} />
           <Route path='/settings' element={<ProtectedSettings />} />
+          <Route path='/search' element={<SearchPage />} />
+          <Route path='/start' element={<StarterPage />} />
           <Route path='*' element={<PageNotFound />} />
         </Routes>
       </Layout>
