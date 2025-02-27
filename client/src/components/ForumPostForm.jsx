@@ -64,8 +64,12 @@ const ForumPostForm = ({ onPostCreated }) => {
       
       const freshToken = await getIdToken(currentUser, true);
       
+      // Remove any trailing slash from the API URL
+      const apiUrl = import.meta.env.VITE_API_URL.replace(/\/$/, '');
+      console.log('API URL:', apiUrl);
+
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/forum`,
+        `${apiUrl}/api/forum`,
         {
           title: formData.title.trim(),
           content: formData.content.trim(),

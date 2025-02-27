@@ -59,7 +59,16 @@ app.get("/protected", protect, (req, res) => {
   });
 });
 app.use("/tags", TagRouter);
-app.use("/api/forum", ForumRouter);
+// Forum routes
+app.use("/api/forum", (req, res, next) => {
+  console.log('Forum route accessed:', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body
+  });
+  next();
+}, ForumRouter);
 
 // Start server
 const PORT = process.env.PORT || 6969;
