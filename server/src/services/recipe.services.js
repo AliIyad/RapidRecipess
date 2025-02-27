@@ -1,5 +1,6 @@
 const Recipe = require("../models/recipe.model");
 const Interaction = require("../models/interaction.model");
+const mongoose = require("mongoose");
 
 const getAllRecipes = async () => {
   try {
@@ -59,9 +60,17 @@ const getRecipeById = async (recipeId) => {
 
 const getRecipesByUser = async (userId) => {
   try {
-    const recipes = await Recipe.find({ user: userId }).populate("ingredients");
+    // Convert the user ID string to a MongoDB ObjectId
+    const objectId = mongoose.Types.ObjectId.createFromHexString(userId);
+
+    // Query the recipe collection for recipes belonging to this user
+    const recipes = await Recipe.find({ user: objectId })
+      .sort({ createdAt: -1 })
+      .populate("tags"); // Populate tags if needed
+
     return recipes;
   } catch (error) {
+    console.error("Error fetching recipes by user:", error);
     throw new Error("Error fetching recipes");
   }
 };

@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const recipeService = require("../services/recipe.services");
 const { uploadImageToImgBB } = require("../services/imageUploadService");
 
@@ -22,10 +23,22 @@ const createRecipe = async (req, res) => {
       imageUrl = await uploadImageToImgBB(req.file.buffer);
     }
 
-    // Log the difficulty value
-    console.log("Difficulty received:", difficulty);
+    // Convert string tags to proper Tag references
+    const tagIds = [];
+    for (const tag of tags.split(",").map((t) => t.trim())) {
+      try {
+        // Try to convert existing tag string to ObjectId
+        const tagId = new mongoose.Types.ObjectId(tag);
+        tagIds.push(tagId);
+      } catch (error) {
+        // If not a valid ObjectId, create a new Tag document
+        const newTag = new mongoose.model("Tag")({ name: tag });
+        await newTag.save();
+        tagIds.push(newTag._id);
+      }
+    }
 
-    // Create a new recipe object
+    // Create a new recipe object with proper tag references
     const newRecipe = {
       title,
       ingredients: ingredients
@@ -34,16 +47,13 @@ const createRecipe = async (req, res) => {
       steps: steps.split("\n"),
       prepTime: parseInt(prepTime, 10),
       cookTime: parseInt(cookTime, 10),
-      difficulty: difficulty.toLowerCase(), // Convert to lowercase
-      tags: tags.split(",").map((tag) => tag.trim()),
+      difficulty: difficulty.toLowerCase(),
+      tags: tagIds,
       user: user._id,
       imageUrl,
     };
 
-    console.log("New recipe object:", newRecipe); // Log the new recipe object
-
     const recipe = await recipeService.createRecipe(newRecipe);
-
     res.status(201).json(recipe);
   } catch (error) {
     console.error("Error creating recipe:", error);
@@ -110,10 +120,27 @@ const getRecipeById = async (req, res) => {
 
 const getRecipesByUser = async (req, res) => {
   try {
-    const recipes = await recipeService.getRecipesByUser(req.params.id);
-    res.status(200).json(recipes);
+    const userId = req.params.id;
+
+    // Validate the user ID format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        message: "Invalid user ID format",
+        success: false,
+      });
+    }
+
+    const recipes = await recipeService.getRecipesByUser(userId);
+    res.status(200).json({
+      recipes,
+      success: true,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error fetching recipes by user:", error);
+    res.status(500).json({
+      message: "Internal server error while fetching recipes",
+      success: false,
+    });
   }
 };
 

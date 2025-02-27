@@ -86,6 +86,7 @@ router.post(
   upload.single("image"),
   recipeController.createRecipe
 );
+
 router.put(
   "/:id",
   protect,

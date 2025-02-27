@@ -6,33 +6,58 @@ import { Button } from "reactstrap";
 import "../CSS/ProfilePage.css";
 
 const ProfilePage = () => {
-  const { user, loading, token } = useAuth(); // Destructure token from context
+  const { user, loading, token } = useAuth();
   const [userData, setUserData] = useState({});
+  const [recipes, setRecipes] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // If user is authenticated, fetch user data
     const fetchUserData = async () => {
       if (user && token) {
-        // Ensure both user and token are available
         try {
           const response = await axios.get(
-            `http://localhost:6969/auth/profile`, // Use user.id from context
+            `http://localhost:6969/auth/profile`,
             {
               headers: {
-                Authorization: `Bearer ${token}`, // Use token from context
+                Authorization: `Bearer ${token}`,
               },
             }
           );
           setUserData(response.data.user);
-          console.log(response.data.user);
         } catch (error) {
           console.error("Error fetching user data:", error);
+          setError("Failed to fetch user data. Please try again.");
         }
       }
     };
 
     fetchUserData();
-  }, [user, token]); // Depend on both user and token
+  }, [user, token]);
+
+  useEffect(() => {
+    const fetchUserRecipes = async () => {
+      if (user && token) {
+        try {
+          // Use userData.id since that's where the ID is stored
+          const response = await axios.get(
+            `http://localhost:6969/recipe/user/${userData.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          setRecipes(response.data.recipes);
+        } catch (error) {
+          console.error("Error fetching user recipes:", error);
+          setError("Failed to fetch your recipes. Please try again.");
+        }
+      }
+    };
+
+    fetchUserRecipes();
+  }, [user, token, userData]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -44,8 +69,10 @@ const ProfilePage = () => {
 
   return (
     <div className='profile-page'>
+      {error && <div className='alert alert-danger mt-3'>{error}</div>}
+
       <div className='profile-header'>
-        <h1>Welcome, {userData.username}!</h1>
+        <h1>Welcome, {userData.username || userData.email}!</h1>
         <p>Email: {userData.email}</p>
         <p>Verified: {userData.verified ? "Yes" : "No"}</p>
       </div>
@@ -64,11 +91,11 @@ const ProfilePage = () => {
             Message: {userData.notificationPreferences?.message ? "Yes" : "No"}
           </li>
           <li>
-            Friend Request:
+            Friend Request:{" "}
             {userData.notificationPreferences?.friendRequest ? "Yes" : "No"}
           </li>
           <li>
-            Recipe Update:
+            Recipe Update:{" "}
             {userData.notificationPreferences?.recipeUpdate ? "Yes" : "No"}
           </li>
         </ul>
@@ -82,9 +109,24 @@ const ProfilePage = () => {
       <div className='profile-section'>
         <h2>Followers and Friends</h2>
         <div className='stats'>
-          <p>Followers: {userData.followers?.length}</p>
-          <p>Friends: {userData.friends?.length}</p>
+          <p>Followers: {userData.followers?.length || 0}</p>
+          <p>Friends: {userData.friends?.length || 0}</p>
         </div>
+      </div>
+
+      <div className='profile-section'>
+        <h2>Personal Recipes</h2>
+        {recipes.length === 0 ? (
+          <p>No recipes found. Why not create one?</p>
+        ) : (
+          <ul>
+            {recipes.map((recipe) => (
+              <li key={recipe.id}>
+                <Link to={`/recipe/${recipe.id}`}>{recipe.title}</Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className='profile-section'>

@@ -72,7 +72,7 @@ const RecipeDashboard = ({ userId }) => {
         {
           params: {
             tagIds: preferredTags.join(","), // Pass preferred tags as query params
-            limit: 5,
+            limit: 10,
             skip,
           },
         }

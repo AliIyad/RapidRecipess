@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Form,
@@ -9,25 +9,25 @@ import {
   Alert,
 } from "reactstrap";
 import "../CSS/RecipeForm.css";
-import { useAuth } from "../context/AuthContext"; // Firebase authentication context
-import api from "../services/authService"; // API service to handle recipe submission
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 const RecipeForm = ({ setRecipes }) => {
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [recipeName, setRecipeName] = useState("");
+  const [title, setTitle] = useState("");
   const [ingredients, setIngredients] = useState("");
-  const [instructions, setInstructions] = useState("");
+  const [steps, setSteps] = useState("");
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
   const [difficulty, setDifficulty] = useState("easy");
   const [tags, setTags] = useState("");
   const [recipeImage, setRecipeImage] = useState(null);
   const [feedback, setFeedback] = useState("");
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
 
-  // Get the user from Firebase authentication context
-  const { user, loading } = useAuth();
+  const { user, token, loading } = useAuth();
+  const [userData, setUserData] = useState(null);
 
-  // If Firebase is still loading, or user is not authenticated, show an alert or block form submission
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -35,6 +35,38 @@ const RecipeForm = ({ setRecipes }) => {
   if (!user) {
     return <div>You must be logged in to submit a recipe.</div>;
   }
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user && token) {
+        try {
+          const response = await axios.get(
+            `http://localhost:6969/auth/profile`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setUserData(response.data.user);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user, token]);
+
+  useEffect(() => {
+    if (feedback) {
+      setFeedbackVisible(true);
+      const timer = setTimeout(() => {
+        setFeedbackVisible(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedback]);
 
   const handleInputFocus = () => setIsFormVisible(true);
 
@@ -47,45 +79,61 @@ const RecipeForm = ({ setRecipes }) => {
     }
 
     const formData = new FormData();
-    formData.append("title", recipeName);
-    formData.append("ingredients", ingredients);
-    formData.append("steps", instructions);
+    formData.append("title", title);
+    formData.append(
+      "ingredients",
+      ingredients.split(",").map((item) => item.trim())
+    );
+    formData.append(
+      "steps",
+      steps.split(".").map((item) => item.trim())
+    );
     formData.append("prepTime", prepTime);
     formData.append("cookTime", cookTime);
     formData.append("difficulty", difficulty);
-    formData.append("tags", tags);
+    formData.append(
+      "tags",
+      tags.split(",").map((item) => item.trim())
+    );
     if (recipeImage) {
       formData.append("image", recipeImage);
     }
 
     try {
-      // Make API request to submit the recipe, including Firebase user token in headers
-      const response = await api.post("/recipe", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${await user.getIdToken()}`, // Attach Firebase token
-        },
-      });
+      const response = await axios.post(
+        "http://localhost:6969/recipe",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      // Update recipe list and show feedback message
       setRecipes((prev) => [response.data, ...prev]);
       setFeedback("Thank you! Your recipe has been submitted.");
       resetForm();
     } catch (error) {
-      setFeedback(error.response?.data?.message || "Error submitting recipe.");
+      console.error("Error submitting recipe:", error);
+      setFeedback(
+        error.response?.data?.message ||
+          error.response?.statusText ||
+          "Error submitting recipe."
+      );
     }
   };
 
   const resetForm = () => {
-    setRecipeName("");
+    setTitle("");
     setIngredients("");
-    setInstructions("");
+    setSteps("");
     setPrepTime("");
     setCookTime("");
     setDifficulty("easy");
     setTags("");
     setRecipeImage(null);
-    setTimeout(() => setIsFormVisible(false), 2000);
+    setTimeout(() => setIsFormVisible(false), 1000);
   };
 
   return (
@@ -104,18 +152,18 @@ const RecipeForm = ({ setRecipes }) => {
       {isFormVisible && (
         <Form onSubmit={handleFormSubmit} className='recipe-form'>
           <FormGroup>
-            <Label for='recipeName'>Recipe Name</Label>
+            <Label for='title'>Recipe Title</Label>
             <Input
               type='text'
-              id='recipeName'
-              value={recipeName}
-              onChange={(e) => setRecipeName(e.target.value)}
+              id='title'
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               required
             />
           </FormGroup>
 
           <FormGroup>
-            <Label for='ingredients'>Ingredients</Label>
+            <Label for='ingredients'>Ingredients (comma-separated)</Label>
             <Input
               type='textarea'
               id='ingredients'
@@ -126,12 +174,12 @@ const RecipeForm = ({ setRecipes }) => {
           </FormGroup>
 
           <FormGroup>
-            <Label for='instructions'>Instructions</Label>
+            <Label for='steps'>Steps (separated by periods)</Label>
             <Input
               type='textarea'
-              id='instructions'
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
+              id='steps'
+              value={steps}
+              onChange={(e) => setSteps(e.target.value)}
               required
             />
           </FormGroup>
@@ -173,7 +221,7 @@ const RecipeForm = ({ setRecipes }) => {
           </FormGroup>
 
           <FormGroup>
-            <Label for='tags'>Tags</Label>
+            <Label for='tags'>Tags (comma-separated)</Label>
             <Input
               type='text'
               id='tags'
@@ -203,9 +251,12 @@ const RecipeForm = ({ setRecipes }) => {
             Cancel
           </Button>
 
-          {feedback && (
+          {feedbackVisible && (
             <Alert
-              color={feedback.includes("Thank you") ? "success" : "danger"}>
+              color={feedback.includes("Thank you") ? "success" : "danger"}
+              isOpen={feedbackVisible}
+              toggle={() => setFeedbackVisible(false)}
+              fade={true}>
               {feedback}
             </Alert>
           )}
