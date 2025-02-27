@@ -3,7 +3,7 @@ import { Container, Row, Col, Button, Spinner, Alert, Pagination, PaginationItem
 import { useAuth } from '../context/AuthContext';
 import ForumPost from '../components/ForumPost';
 import ForumPostForm from '../components/ForumPostForm';
-import axios from 'axios';
+import api from '../services/authService';
 import '../CSS/CommunityPage.css';
 
 const CommunityPage = () => {
@@ -21,9 +21,7 @@ const CommunityPage = () => {
   const fetchPosts = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}api/forum?page=${page}`
-      );
+      const response = await api.get(`api/forum?page=${page}`);
       setPosts(response.data.posts);
       setPagination({
         currentPage: response.data.currentPage,
@@ -49,15 +47,7 @@ const CommunityPage = () => {
 
   const handlePostUpdate = async (postId, updateData) => {
     try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}api/forum/${postId}`,
-        updateData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await api.put(`api/forum/${postId}`, updateData);
       setPosts(prevPosts =>
         prevPosts.map(post =>
           post._id === postId ? response.data : post
@@ -71,11 +61,7 @@ const CommunityPage = () => {
   const handlePostDelete = async (postId) => {
     if (window.confirm('Are you sure you want to delete this post?')) {
       try {
-        await axios.delete(`${import.meta.env.VITE_API_URL}api/forum/${postId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        await api.delete(`api/forum/${postId}`);
         setPosts(prevPosts => prevPosts.filter(post => post._id !== postId));
       } catch (err) {
         setError('Failed to delete post');

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../services/authService";
 import { Card, CardBody, CardTitle, CardText, Button, Spinner } from "reactstrap";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -26,14 +26,7 @@ const RecipeDashboard = ({ userId }) => {
     const fetchUserData = async () => {
       if (user && token) {
         try {
-          const response = await axios.get(
-            `http://localhost:6969/auth/profile`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const response = await api.get('auth/profile');
           setUserData(response.data.user);
           setPreferredTags(response.data.user.preferredTags || []);
         } catch (error) {
@@ -51,14 +44,14 @@ const RecipeDashboard = ({ userId }) => {
 
     setLoading(true);
     try {
-      let url = `http://localhost:6969/recipe?page=${page}&limit=${ITEMS_PER_PAGE}`;
+      let endpoint = `recipe?page=${page}&limit=${ITEMS_PER_PAGE}`;
       
       // If there are preferred tags, use them as a filter
       if (preferredTags.length > 0) {
-        url = `http://localhost:6969/recipe/recommended?tagIds=${preferredTags.join(",")}&page=${page}&limit=${ITEMS_PER_PAGE}`;
+        endpoint = `recipe/recommended?tagIds=${preferredTags.join(",")}&page=${page}&limit=${ITEMS_PER_PAGE}`;
       }
 
-      const response = await axios.get(url);
+      const response = await api.get(endpoint);
       console.log("API Response:", response.data);
 
       if (!Array.isArray(response.data)) {
@@ -90,6 +83,34 @@ const RecipeDashboard = ({ userId }) => {
 
   const handleLoadMore = () => {
     fetchRecipes();
+  };
+
+  const handleInteraction = async (contentType, contentId, reactionType) => {
+    if (!user) {
+      setError("You must be logged in to like or dislike a recipe.");
+      return;
+    }
+
+    try {
+      const response = await api.post("interaction", {
+        contentType,
+        contentId,
+        reactionType,
+      });
+
+      // Update the recipe's counts in the list
+      const { counts } = response.data;
+      setRecipes(prevRecipes => 
+        prevRecipes.map(recipe => 
+          recipe._id === contentId 
+            ? { ...recipe, likeCount: counts.likes, dislikeCount: counts.dislikes }
+            : recipe
+        )
+      );
+    } catch (error) {
+      console.error("Error adding interaction:", error);
+      setError("Failed to add interaction. Please try again later.");
+    }
   };
 
   if (userLoading) {
@@ -129,13 +150,28 @@ const RecipeDashboard = ({ userId }) => {
                       {recipe.tags?.map((tag) => tag.name).join(", ") ||
                         "No tags"}
                     </CardText>
-                    <div className='interaction-meters'>
-                      <p>
-                        <strong>Likes:</strong> {recipe.likeCount || 0}
-                      </p>
-                      <p>
-                        <strong>Dislikes:</strong> {recipe.dislikeCount || 0}
-                      </p>
+                    <div className='interaction-meters mt-3'>
+                      <Button
+                        outline
+                        color='primary'
+                        size='sm'
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent navigation
+                          handleInteraction("recipe", recipe._id, "like");
+                        }}>
+                        Like ({recipe.likeCount || 0})
+                      </Button>
+                      <Button
+                        outline
+                        color='secondary'
+                        size='sm'
+                        className='ms-2'
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent navigation
+                          handleInteraction("recipe", recipe._id, "dislike");
+                        }}>
+                        Dislike ({recipe.dislikeCount || 0})
+                      </Button>
                     </div>
                   </CardBody>
                 </Card>

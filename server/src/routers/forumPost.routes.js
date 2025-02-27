@@ -48,5 +48,7 @@ router.post("/", protect, forumPostController.createPost);
 router.put("/:id", protect, forumPostController.updatePost);
 router.delete("/:id", protect, forumPostController.deletePost);
 router.post("/:id/like", protect, forumPostController.toggleLike);
+router.get("/:id/comments", forumPostController.getComments);
+router.post("/:id/comments", protect, forumPostController.addComment);
 
 module.exports = router;

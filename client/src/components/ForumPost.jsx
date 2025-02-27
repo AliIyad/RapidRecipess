@@ -1,15 +1,40 @@
 import React, { useState } from 'react';
 import { Card, CardBody, CardTitle, CardText, Button } from 'reactstrap';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/authService';
 
 const ForumPost = ({ post, onDelete, onUpdate }) => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(post.content);
   const [error, setError] = useState('');
-  const [isLiked, setIsLiked] = useState(post.likes?.includes(user?.id));
+  const [isLiked, setIsLiked] = useState(post.likes?.includes(user?._id));
   const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
+  const [showComments, setShowComments] = useState(false);
+  const [comment, setComment] = useState('');
+  const [comments, setComments] = useState(post.comments || []);
+
+  const handleAddComment = async () => {
+    if (!user) {
+      setError('Please log in to comment');
+      return;
+    }
+
+    if (!comment.trim()) return;
+
+    try {
+      const response = await api.post(`api/forum/${post._id}/comments`, {
+        content: comment
+      });
+
+      setComments(prevComments => [...prevComments, response.data]);
+      setComment('');
+      setError('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      setError('Failed to add comment');
+    }
+  };
 
   const handleLike = async () => {
     if (!user) {
@@ -18,15 +43,7 @@ const ForumPost = ({ post, onDelete, onUpdate }) => {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/forum/${post._id}/like`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await api.post(`api/forum/${post._id}/like`);
 
       setIsLiked(!isLiked);
       setLikesCount(response.data.likes.length);
@@ -34,6 +51,20 @@ const ForumPost = ({ post, onDelete, onUpdate }) => {
     } catch (error) {
       console.error('Error liking post:', error);
       setError('Failed to like post');
+    }
+  };
+
+  // Fetch comments when showing comments section
+  const toggleComments = async () => {
+    setShowComments(!showComments);
+    if (!showComments && comments.length === 0) {
+      try {
+      const response = await api.get(`api/forum/${post._id}/comments`);
+        setComments(response.data);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+        setError('Failed to load comments');
+      }
     }
   };
 
@@ -91,12 +122,16 @@ const ForumPost = ({ post, onDelete, onUpdate }) => {
             <Button color="primary" size="sm" onClick={handleLike} className="me-2">
               {isLiked ? 'Unlike' : 'Like'} ({likesCount})
             </Button>
-            <Button color="info" size="sm">
-              Comments ({post.comments?.length || 0})
+            <Button 
+              color="info" 
+              size="sm"
+              onClick={toggleComments}
+            >
+              Comments ({comments.length})
             </Button>
           </div>
 
-          {user?.id === post.author._id && (
+          {user?._id === post.author._id && (
             <div>
               <Button
                 color="warning"
@@ -116,6 +151,39 @@ const ForumPost = ({ post, onDelete, onUpdate }) => {
             </div>
           )}
         </div>
+
+        {showComments && (
+          <div className="mt-3">
+            <div className="mb-3">
+              <textarea
+                className="form-control mb-2"
+                placeholder="Write a comment..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+              <Button 
+                color="primary" 
+                size="sm" 
+                onClick={handleAddComment}
+                disabled={!comment.trim()}
+              >
+                Add Comment
+              </Button>
+            </div>
+            {comments.map((comment) => (
+              <Card key={comment._id} className="mb-2">
+                <CardBody>
+                  <div className="d-flex justify-content-between">
+                    <small className="text-muted">
+                      {comment.author?.username || 'Anonymous'} - {formatDate(comment.createdAt)}
+                    </small>
+                  </div>
+                  <CardText className="mt-2">{comment.content}</CardText>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        )}
       </CardBody>
     </Card>
   );

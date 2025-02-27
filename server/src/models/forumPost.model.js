@@ -18,8 +18,20 @@ const forumPostSchema = new mongoose.Schema({
     index: true
   },
   comments: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Comment"
+    content: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
   }],
   likes: [{
     type: mongoose.Schema.Types.ObjectId,

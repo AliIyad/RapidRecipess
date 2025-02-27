@@ -125,11 +125,64 @@ const toggleLike = async (postId, userId) => {
   }
 };
 
+// Add a comment to a post
+const addComment = async (postId, commentData) => {
+  try {
+    const post = await ForumPost.findById(postId);
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // Create the comment
+    const comment = {
+      content: commentData.content,
+      author: commentData.author,
+      createdAt: commentData.createdAt || new Date()
+    };
+
+    // Add comment to the post
+    post.comments.push(comment);
+    await post.save();
+
+    // Return the newly added comment with populated author
+    const populatedPost = await ForumPost.findById(postId)
+      .populate({
+        path: 'comments.author',
+        select: 'username email'
+      });
+
+    return populatedPost.comments[populatedPost.comments.length - 1];
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get comments for a post
+const getComments = async (postId) => {
+  try {
+    const post = await ForumPost.findById(postId)
+      .populate({
+        path: 'comments.author',
+        select: 'username email'
+      });
+
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    return post.comments;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   createForumPost,
   getAllPosts,
   getPostById,
   updatePost,
   deletePost,
-  toggleLike
+  toggleLike,
+  addComment,
+  getComments
 };

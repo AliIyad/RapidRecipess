@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Form, FormGroup, Label, Input, Button, Alert } from 'reactstrap';
 import { useAuth } from '../context/AuthContext';
-import { getAuth, getIdToken } from 'firebase/auth';
-import axios from 'axios';
+import api from '../services/authService';
 
 const ForumPostForm = ({ onPostCreated }) => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -25,7 +24,7 @@ const ForumPostForm = ({ onPostCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!user || !token) {
+    if (!user) {
       setError('You must be logged in to create a post');
       return;
     }
@@ -55,33 +54,11 @@ const ForumPostForm = ({ onPostCreated }) => {
         tags: tagsArray
       });
 
-      // Get fresh token
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        throw new Error('Not authenticated');
-      }
-      
-      const freshToken = await getIdToken(currentUser, true);
-      
-      // Remove any trailing slash from the API URL
-      const apiUrl = import.meta.env.VITE_API_URL.replace(/\/$/, '');
-      console.log('API URL:', apiUrl);
-
-      const response = await axios.post(
-        `${apiUrl}/api/forum`,
-        {
-          title: formData.title.trim(),
-          content: formData.content.trim(),
-          tags: tagsArray
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${freshToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await api.post('api/forum', {
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        tags: tagsArray
+      });
 
       console.log('Post created successfully:', response.data);
 

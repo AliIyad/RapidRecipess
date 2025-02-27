@@ -109,11 +109,62 @@ const toggleLike = async (req, res) => {
   }
 };
 
+// Get comments for a post
+const getComments = async (req, res) => {
+  try {
+    const post = await forumPostService.getPostById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    // Populate author details for each comment
+    await post.populate({
+      path: 'comments',
+      populate: {
+        path: 'author',
+        select: 'username email'
+      }
+    });
+
+    res.status(200).json(post.comments);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Add a comment to a post
+const addComment = async (req, res) => {
+  try {
+    const { content } = req.body;
+    const postId = req.params.id;
+    const userId = req.user._id;
+
+    if (!content) {
+      return res.status(400).json({ message: "Comment content is required" });
+    }
+
+    const comment = await forumPostService.addComment(postId, {
+      content,
+      author: userId,
+      createdAt: new Date()
+    });
+
+    // Populate author details
+    await comment.populate('author', 'username email');
+
+    res.status(201).json(comment);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createPost,
   getAllPosts,
   getPostById,
   updatePost,
   deletePost,
-  toggleLike
+  toggleLike,
+  getComments,
+  addComment
 };
