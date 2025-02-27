@@ -1,118 +1,69 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
-import Cookies from "js-cookie";
-import { loginUser, registerUser, verifyAuth } from "../services/authService";
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { getAuth, onAuthStateChanged, getIdToken } from "firebase/auth";
+import { loginUser, registerUser, logoutUser } from "../services/authService";
 
 const AuthContext = createContext();
-
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const verifyTokens = async () => {
-    try {
-      const accessToken = Cookies.get("accessToken");
-      const refreshToken = Cookies.get("refreshToken");
-
-      if (!accessToken || !refreshToken) {
-        setLoading(false);
-        return;
-      }
-
-      const response = await verifyAuth(accessToken, refreshToken);
-
-      if (response.user) {
-        setUser(response.user);
-        setIsAuthenticated(true);
-      }
-    } catch (error) {
-      console.error("Token verification failed:", error);
-      Cookies.remove("accessToken");
-      Cookies.remove("refreshToken");
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
-    const onLoadAuthCheck = async () => {
-      const storedAuthState = localStorage.getItem("authState");
-      if (storedAuthState) {
-        const { user, isAuthenticated } = JSON.parse(storedAuthState);
-        if (isAuthenticated) {
-          setUser(user);
-          setIsAuthenticated(true);
-          setLoading(false);
-          return;
-        }
+    const auth = getAuth();
+
+    // Listen for auth changes
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const idToken = await getIdToken(user);
+        setUser({
+          id: user.uid,
+          email: user.email,
+          username: user.displayName,
+        });
+        setToken(idToken);
+      } else {
+        setUser(null);
+        setToken(null);
       }
-      await verifyTokens();
-    };
-    onLoadAuthCheck();
+      setLoading(false);
+    });
+
+    return () => unsubscribe(); // Cleanup listener
   }, []);
 
   const login = async (email, password) => {
-    try {
-      const response = await loginUser({ email, password });
-      const storeAuthState = {
-        user: response.user,
-        isAuthenticated: true,
-      };
-      localStorage.setItem("authState", JSON.stringify(storeAuthState));
-      if (response.accessToken && response.refreshToken) {
-        Cookies.set("accessToken", response.accessToken, { path: "/" });
-        Cookies.set("refreshToken", response.refreshToken, { path: "/" });
-      }
-
-      if (response.user) {
-        console.log("Login successful:", response);
-        setUser(response.user);
-        setIsAuthenticated(true);
-        return response;
-      }
-    } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
+    const response = await loginUser({ email, password });
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user) {
+      const idToken = await getIdToken(user);
+      setToken(idToken);
     }
+    return response;
   };
 
   const register = async (userData) => {
-    try {
-      const response = await registerUser(userData);
-
-      if (response.user) {
-        setUser(response.user);
-        setIsAuthenticated(true);
-        return response;
-      }
-    } catch (error) {
-      console.error("Registration failed:", error);
-      throw error;
+    const response = await registerUser(userData);
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user) {
+      const idToken = await getIdToken(user);
+      setToken(idToken);
     }
+    return response;
   };
 
-  const logout = () => {
-    Cookies.remove("accessToken", { path: "/" });
-    Cookies.remove("refreshToken", { path: "/" });
+  const logout = async () => {
+    await logoutUser();
     setUser(null);
-    setIsAuthenticated(false);
+    setToken(null);
   };
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated,
-        loading,
-        login,
-        register,
-        logout,
-        verifyTokens,
-      }}>
+      value={{ user, loading, token, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

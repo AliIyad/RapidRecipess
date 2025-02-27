@@ -78,17 +78,23 @@ const getRecipesByIngredient = async (ingredient) => {
   }
 };
 
-const getRecipesPaginated = async (limit, skip) => {
+const getRecipesByTagIds = async (tagIds, limit = 5, skip = 0) => {
   try {
-    const recipes = await Recipe.find()
+    console.log("Received tagIds in getRecipesByTagIds:", tagIds);
+
+    if (!Array.isArray(tagIds)) {
+      throw new Error("tagIds must be an array of ObjectIds");
+    }
+
+    const recipes = await Recipe.find({ tags: { $in: tagIds } })
       .skip(skip)
       .limit(limit)
-      .populate("user");
+      .populate("tags");
 
     return recipes;
   } catch (error) {
-    console.error("Error fetching recipes:", error);
-    throw new Error("Error fetching recipes");
+    console.error("Error fetching recipes by tag IDs:", error.message);
+    throw new Error("Error fetching recipes by tag IDs: " + error.message);
   }
 };
 
@@ -100,5 +106,5 @@ module.exports = {
   getRecipeById,
   getRecipesByUser,
   getRecipesByIngredient,
-  getRecipesPaginated,
+  getRecipesByTagIds,
 };

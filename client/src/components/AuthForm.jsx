@@ -3,28 +3,31 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import "../CSS/AuthForm.css";
 
-const AuthForm = ({ onSuccess }) => {
+const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
 
   const toggleForm = () => {
-    setIsLogin(!isLogin);
+    console.log("Toggling form. Current state before toggle:", isLogin);
+    setIsLogin((prevState) => {
+      console.log("New state:", !prevState);
+      return !prevState;
+    });
   };
 
   return (
     <div className='auth-form-container'>
-      {isLogin ? (
-        <LoginForm onSuccess={onSuccess} />
-      ) : (
-        <RegisterForm onSuccess={onSuccess} />
-      )}
+      {isLogin ? <LoginForm /> : <RegisterForm />}
+
       <div className='auth-switch-btn'>
         {isLogin ? (
           <p>
-            Don't have an account? <span onClick={toggleForm}>Register</span>
+            Don't have an account?
+            <span onClick={toggleForm}> Register</span>
           </p>
         ) : (
           <p>
-            Already have an account? <span onClick={toggleForm}>Login</span>
+            Already have an account?
+            <span onClick={toggleForm}> Login</span>
           </p>
         )}
       </div>

@@ -73,3 +73,24 @@ button:hover {
 .account-info strong {
   color: #4b5e2dc4;
 }
+
+.tag-preferences {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tag-preferences label {
+  display: flex;
+  align-items: grid;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.tag-preferences input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}

@@ -1,10 +1,10 @@
+// User Model
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  uid: { type: String, required: true, unique: true },
   verified: { type: Boolean, default: false },
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -23,13 +23,8 @@ const userSchema = new mongoose.Schema({
   ],
   recipes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Recipe" }],
   comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-  interactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Interaction" }],
-  prefferredTags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag" }],
+  preferredTags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag" }],
 });
-
-userSchema.methods.comparePassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
-};
 
 const User = mongoose.model("User", userSchema);
 

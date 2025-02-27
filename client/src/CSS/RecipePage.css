@@ -135,3 +135,23 @@
 .interaction-buttons button {
   margin-right: 10px;
 }
+
+.replies-container {
+  padding-left: 20px; /* Indent replies under parent comment */
+  margin-top: 10px; /* Add space between comments and replies */
+}
+
+.replies {
+  margin-left: 20px; /* Indent replies */
+  padding-left: 10px; /* Additional space if needed */
+  border-left: 2px solid #ddd; /* Optional, adds a visual separator */
+}
+
+.btn-reply {
+  font-size: 14px;
+  padding: 5px 10px;
+}
+
+.reply-form {
+  margin-top: 10px;
+}

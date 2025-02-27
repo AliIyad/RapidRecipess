@@ -1,54 +1,65 @@
-.starter-page {
+/* Settings.css */
+
+.settings-page {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  text-align: center;
+  background-color: #f8f8f8;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.starter-header {
-  font-size: 2rem;
+.profile-header {
+  text-align: center;
   margin-bottom: 20px;
 }
 
-.tag-container {
+.profile-header h1 {
+  font-size: 2rem;
+}
+
+.profile-header p {
+  font-size: 1.1rem;
+}
+
+.settings-section {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section h2 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #4b5e2dc4;
+}
+
+.tag-selection {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 10px;
+  margin-bottom: 20px;
 }
 
-.tag-button {
-  padding: 10px 20px;
+.tag-item {
+  margin: 5px;
+}
+
+.tag-item label {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.message {
+  margin-top: 10px;
   font-size: 1rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background-color: #f0f0f0;
-  transition: background-color 0.3s, transform 0.2s;
+  color: #4b5e2dc4;
 }
 
-.tag-button.selected {
-  background-color: #4caf50;
-  color: white;
-}
-
-.tag-button:hover {
-  background-color: #ddd;
-  transform: scale(1.05);
-}
-
-.save-button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  font-size: 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.save-button:hover {
-  background-color: #0056b3;
+.btn-block {
+  width: 100%;
+  margin-top: 10px;
 }

@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Comment = require("../models/comment.model");
 
 // Create a new comment
@@ -29,16 +30,14 @@ const createComment = async (content, recipeId, userId, parentCommentId) => {
 // Get comments for a recipe
 const getCommentsByRecipe = async (recipeId) => {
   try {
-    console.log("Fetching comments for recipe ID in service:", recipeId); // Debugging
-
     const comments = await Comment.find({ recipeId })
-      .populate("userId", "username")
-      .populate("Interactions.userId", "username");
+      .populate("userId", "username") // Populate user details for the comment
+      .populate("replies.userId", "username"); // Populate user details for the replies
 
-    console.log("Comments fetched in service:", comments); // Debugging
+    // Make sure replies are part of each comment
     return comments;
   } catch (error) {
-    console.error("Error fetching comments in service:", error); // Debugging
+    console.error("Error fetching comments:", error);
     throw error;
   }
 };
@@ -77,8 +76,49 @@ const addInteractionToComment = async (commentId, userId, reactionType) => {
   }
 };
 
+// Adding a reply
+const addReplyToComment = async (
+  content,
+  parentCommentId,
+  recipeId,
+  userId
+) => {
+  try {
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(parentCommentId)) {
+      throw new Error("Invalid parentCommentId");
+    }
+
+    // Create the new reply
+    const newReply = new Comment({
+      content,
+      parentCommentId,
+      recipeId,
+      userId, // The ID of the user replying
+      replies: [],
+      interactions: [],
+    });
+
+    // Save the reply
+    await newReply.save();
+
+    // Optionally, add the reply ID to the parent comment
+    const parentComment = await Comment.findById(parentCommentId);
+    if (parentComment) {
+      parentComment.replies.push(newReply._id); // Add reply to the parent
+      await parentComment.save();
+    }
+
+    return newReply;
+  } catch (error) {
+    console.error("Error creating reply:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   createComment,
   getCommentsByRecipe,
   addInteractionToComment,
+  addReplyToComment,
 };

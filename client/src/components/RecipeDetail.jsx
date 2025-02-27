@@ -13,7 +13,7 @@ import { useAuth } from "../context/AuthContext"; // Import the auth context
 import api from "../services/authService";
 
 const RecipeDetail = ({ id }) => {
-  const [recipe, setRecipe] = useState(null);
+  const [recipe, setRecipe] = useState({ tags: [] });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const { user, isAuthenticated } = useAuth(); // Get user and authentication status
@@ -35,6 +35,30 @@ const RecipeDetail = ({ id }) => {
 
     fetchRecipe();
     fetchInteractionCounts("recipe", id);
+  }, [id]);
+
+  useEffect(() => {
+    const fetchRecipeTags = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:6969/tags/recipe/${id}`
+        );
+
+        // Check if the response contains an array of tags
+        if (Array.isArray(response.data)) {
+          setRecipe((prevRecipe) => ({
+            ...prevRecipe,
+            tags: response.data, // Make sure this is an array of tags
+          }));
+        } else {
+          console.error("Received tags are not in array format", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching recipe tags:", error);
+      }
+    };
+
+    fetchRecipeTags();
   }, [id]);
 
   // Handle like/dislike interaction for the recipe
@@ -135,12 +159,18 @@ const RecipeDetail = ({ id }) => {
           </CardText>
           <CardText>
             <strong>Instructions:</strong>
-            <ol>
-              {recipe.steps.map((step, index) => (
-                <li key={index}>{step}</li>
-              ))}
-            </ol>
           </CardText>
+          <ol>
+            {Array.isArray(recipe.steps) ? (
+              recipe.steps.map((step, index) => (
+                <li key={recipe._id || Math.random()}>
+                  {step} <br />
+                </li>
+              ))
+            ) : (
+              <p className='text-muted'>No steps available</p>
+            )}
+          </ol>
           <CardText>
             <strong>Prep Time:</strong> {recipe.prepTime} minutes
           </CardText>
@@ -151,10 +181,17 @@ const RecipeDetail = ({ id }) => {
             <strong>Difficulty:</strong> {recipe.difficulty}
           </CardText>
           <CardText>
-            <strong>Tags:</strong>{" "}
-            {recipe.tags && recipe.tags.length > 0
-              ? recipe.tags.map((tag) => tag.name).join(", ")
-              : "No tags available"}
+            <strong>Tags: </strong>
+            {recipe.tags ? (
+              recipe.tags.map((tag) => (
+                <span key={tag._id || Math.random()} className='tag'>
+                  {tag.name}
+                  {"\n"}
+                </span>
+              ))
+            ) : (
+              <span className='text-muted'>No tags available</span>
+            )}
           </CardText>
 
           {/* Like/Dislike Buttons */}

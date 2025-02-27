@@ -4,8 +4,40 @@ const recipeController = require("../controllers/recipe.controller");
 const upload = require("../utils/upload");
 const { protect } = require("../utils/protected");
 const Recipe = require("../models/recipe.model");
+const recipeService = require("../services/recipe.services");
 
-router.get("/paginated", recipeController.getRecipesPaginated);
+const mongoose = require("mongoose");
+
+router.get("/recommended", async (req, res) => {
+  try {
+    const { tagIds } = req.query;
+
+    if (!tagIds) {
+      return res.status(400).json({ message: "No tagIds provided" });
+    }
+
+    console.log("Raw tagIds:", tagIds);
+
+    let tagArray;
+    if (Array.isArray(tagIds)) {
+      tagArray = tagIds.map((tag) => new mongoose.Types.ObjectId(tag));
+    } else if (typeof tagIds === "string") {
+      tagArray = tagIds
+        .split(",")
+        .map((tag) => new mongoose.Types.ObjectId(tag.trim()));
+    } else {
+      throw new Error("tagIds must be an array or a comma-separated string");
+    }
+
+    console.log("Converted tagArray:", tagArray);
+
+    const recipes = await recipeService.getRecipesByTagIds(tagArray);
+    res.status(200).json(recipes);
+  } catch (error) {
+    console.error("Error fetching recommended recipes:", error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 router.get("/most-liked", async (req, res) => {
   const { limit = 5 } = req.query; // Default to 5 recipes if no limit is provided

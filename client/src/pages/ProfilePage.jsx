@@ -3,31 +3,42 @@ import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { Button } from "reactstrap";
-
 import "../CSS/ProfilePage.css";
 
 const ProfilePage = () => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, loading, token } = useAuth(); // Destructure token from context
   const [userData, setUserData] = useState({});
 
   useEffect(() => {
-    if (isAuthenticated) {
-      axios
-        .get(`http://localhost:6969/users/${user.id}`)
-        .then((response) => {
-          setUserData(response.data);
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    }
-  }, [isAuthenticated, user.id]);
+    // If user is authenticated, fetch user data
+    const fetchUserData = async () => {
+      if (user && token) {
+        // Ensure both user and token are available
+        try {
+          const response = await axios.get(
+            `http://localhost:6969/auth/profile`, // Use user.id from context
+            {
+              headers: {
+                Authorization: `Bearer ${token}`, // Use token from context
+              },
+            }
+          );
+          setUserData(response.data.user);
+          console.log(response.data.user);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user, token]); // Depend on both user and token
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <div>You are not logged in</div>;
   }
 
@@ -42,47 +53,23 @@ const ProfilePage = () => {
       <div className='profile-section'>
         <h2>Notification Preferences</h2>
         <ul>
+          <li>Like: {userData.notificationPreferences?.like ? "Yes" : "No"}</li>
           <li>
-            Like:{" "}
-            {userData.notificationPreferences &&
-            userData.notificationPreferences.like
-              ? "Yes"
-              : "No"}
+            Comment: {userData.notificationPreferences?.comment ? "Yes" : "No"}
           </li>
           <li>
-            Comment:{" "}
-            {userData.notificationPreferences &&
-            userData.notificationPreferences.comment
-              ? "Yes"
-              : "No"}
+            Follow: {userData.notificationPreferences?.follow ? "Yes" : "No"}
           </li>
           <li>
-            Follow:{" "}
-            {userData.notificationPreferences &&
-            userData.notificationPreferences.follow
-              ? "Yes"
-              : "No"}
+            Message: {userData.notificationPreferences?.message ? "Yes" : "No"}
           </li>
           <li>
-            Message:{" "}
-            {userData.notificationPreferences &&
-            userData.notificationPreferences.message
-              ? "Yes"
-              : "No"}
+            Friend Request:
+            {userData.notificationPreferences?.friendRequest ? "Yes" : "No"}
           </li>
           <li>
-            Friend Request:{" "}
-            {userData.notificationPreferences &&
-            userData.notificationPreferences.friendRequest
-              ? "Yes"
-              : "No"}
-          </li>
-          <li>
-            Recipe Update:{" "}
-            {userData.notificationPreferences &&
-            userData.notificationPreferences.recipeUpdate
-              ? "Yes"
-              : "No"}
+            Recipe Update:
+            {userData.notificationPreferences?.recipeUpdate ? "Yes" : "No"}
           </li>
         </ul>
         <Link to={`/settings`}>
@@ -91,11 +78,12 @@ const ProfilePage = () => {
           </Button>
         </Link>
       </div>
+
       <div className='profile-section'>
         <h2>Followers and Friends</h2>
         <div className='stats'>
-          <p>Followers: {userData.followers && userData.followers.length}</p>
-          <p>Friends: {userData.friends && userData.friends.length}</p>
+          <p>Followers: {userData.followers?.length}</p>
+          <p>Friends: {userData.friends?.length}</p>
         </div>
       </div>
 

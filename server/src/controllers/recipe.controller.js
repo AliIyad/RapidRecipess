@@ -128,21 +128,6 @@ const getRecipesByIngredient = async (req, res) => {
   }
 };
 
-const getRecipesPaginated = async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit) || 10; // Default limit is 10
-    const skip = parseInt(req.query.skip) || 0; // Default skip is 0
-
-    // Call the service function with limit and skip
-    const recipes = await recipeService.getRecipesPaginated(limit, skip);
-
-    res.status(200).json(recipes);
-  } catch (error) {
-    console.error("Error fetching recipes:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
 module.exports = {
   getAllRecipes,
   createRecipe,
@@ -151,5 +136,4 @@ module.exports = {
   getRecipeById,
   getRecipesByUser,
   getRecipesByIngredient,
-  getRecipesPaginated,
 };

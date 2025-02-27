@@ -2,47 +2,98 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Card, CardBody, CardTitle, CardText, Button } from "reactstrap";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "../CSS/RecipeDashboard.css";
 
-const RecipeDashboard = () => {
+const RecipeDashboard = ({ userId }) => {
+  const { user, loading: userLoading, token } = useAuth();
+  const [userData, setUserData] = useState({});
   const [recipes, setRecipes] = useState([]);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [preferredTags, setPreferredTags] = useState([]);
 
-  // Fetch recipes
+  useEffect(() => {
+    setRecipes([]);
+    setSkip(0);
+    setHasMore(true);
+  }, [userId]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user && token) {
+        try {
+          const response = await axios.get(
+            `http://localhost:6969/auth/profile`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setUserData(response.data.user);
+          setPreferredTags(response.data.user.preferredTags || []);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user, token]);
+
+  useEffect(() => {
+    const fetchUserTags = async () => {
+      if (!userData.id) return; // Prevents request if userData.id is not set
+
+      try {
+        const response = await axios.get(
+          `http://localhost:6969/users/${userData.id}/preferred-tags`
+        );
+        setPreferredTags(response.data);
+      } catch (error) {
+        console.error("Error fetching preferred tags:", error);
+      }
+    };
+
+    fetchUserTags();
+  }, [userData.id]); // Runs only when userData.id is available
+
+  // Fetch recipes based on preferred tags
   const fetchRecipes = async () => {
+    if (loading || !hasMore || !preferredTags.length) return;
+
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:6969/recipe/paginated?limit=5&skip=${skip}`
+        `http://localhost:6969/recipe/recommended`,
+        {
+          params: {
+            tagIds: preferredTags.join(","), // Pass preferred tags as query params
+            limit: 5,
+            skip,
+          },
+        }
       );
-      const newRecipes = response.data;
 
-      if (newRecipes.length === 0) {
-        setHasMore(false); // No more recipes to load
-      } else {
-        // Fetch interaction counts for each recipe
-        const recipesWithInteractions = await Promise.all(
-          newRecipes.map(async (recipe) => {
-            const interactionResponse = await axios.get(
-              `/interaction/count/recipe/${recipe._id}`
-            );
-            return {
-              ...recipe,
-              likeCount: interactionResponse.data.likes,
-              dislikeCount: interactionResponse.data.dislikes,
-            };
-          })
+      console.log("API Response:", response.data);
+
+      if (!Array.isArray(response.data)) {
+        throw new Error(
+          `Invalid response format: ${JSON.stringify(response.data)}`
         );
-
-        setRecipes((prevRecipes) => [
-          ...prevRecipes,
-          ...recipesWithInteractions,
-        ]);
-        setSkip((prevSkip) => prevSkip + newRecipes.length);
       }
+
+      const newRecipes = response.data;
+      if (newRecipes.length === 0) {
+        setHasMore(false);
+        return;
+      }
+
+      setRecipes((prevRecipes) => [...prevRecipes, ...newRecipes]);
+      setSkip((prevSkip) => prevSkip + newRecipes.length);
     } catch (error) {
       console.error("Error fetching recipes:", error);
       setError("Failed to fetch recipes. Please try again later.");
@@ -52,12 +103,10 @@ const RecipeDashboard = () => {
   };
 
   useEffect(() => {
-    fetchRecipes();
-  }, []); // Fetch initial recipes on component mount
-
-  const handleLoadMore = () => {
-    fetchRecipes();
-  };
+    if (preferredTags.length > 0) {
+      fetchRecipes();
+    }
+  }, [preferredTags]);
 
   return (
     <div className='dashboard mt-5'>
@@ -65,8 +114,8 @@ const RecipeDashboard = () => {
       {error && <p className='text-danger'>{error}</p>}
       <div className='recipe-list'>
         {recipes.length > 0 ? (
-          recipes.map((recipe, index) => (
-            <div key={index} className='recipe-post'>
+          recipes.map((recipe) => (
+            <div key={recipe._id} className='recipe-post'>
               <Link to={`/recipe/${recipe._id}`} className='recipe-link'>
                 <Card className='recipe-card'>
                   <img
@@ -85,16 +134,15 @@ const RecipeDashboard = () => {
                     </CardText>
                     <CardText>
                       <strong>Tags:</strong>{" "}
-                      {recipe.tags.map((tag) => {
-                        tag;
-                      })}
+                      {recipe.tags?.map((tag) => tag.name).join(", ") ||
+                        "No tags"}
                     </CardText>
                     <div className='interaction-meters'>
                       <p>
-                        <strong>Likes:</strong> {recipe.likeCount || 0}
+                        <strong>Likes:</strong> {recipe.likeCount}
                       </p>
                       <p>
-                        <strong>Dislikes:</strong> {recipe.dislikeCount || 0}
+                        <strong>Dislikes:</strong> {recipe.dislikeCount}
                       </p>
                     </div>
                   </CardBody>
@@ -103,13 +151,13 @@ const RecipeDashboard = () => {
             </div>
           ))
         ) : (
-          <p>No recipes submitted yet. Add some recipes!</p>
+          <p>No recipes found matching your preferences.</p>
         )}
       </div>
 
       {hasMore && (
         <div className='text-center mt-4'>
-          <Button color='primary' onClick={handleLoadMore} disabled={loading}>
+          <Button color='primary' onClick={fetchRecipes} disabled={loading}>
             {loading ? "Loading..." : "Load More"}
           </Button>
         </div>

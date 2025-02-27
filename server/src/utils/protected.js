@@ -1,62 +1,35 @@
-// utils/protected.js
-const { verify } = require("jsonwebtoken");
 const User = require("../models/user.model");
-
+const admin = require("../config/admin");
 const protect = async (req, res, next) => {
   try {
-    // Log headers and cookies for debugging
-    console.log("Request headers:", req.headers);
-    console.log("Request cookies:", req.cookies);
-
-    // Retrieve the authorization header
     const authHeader = req.headers.authorization;
-
-    // Retrieve the token from the header or cookies
-    const token = authHeader
-      ? authHeader.split(" ")[1] // Extract token from "Bearer <token>"
-      : req.cookies.accessToken; // Fallback to cookie
-
-    console.log("Token retrieved:", token);
-
-    // If no token is found, return an error
-    if (!token) {
-      console.log("No token found!");
-      return res.status(401).json({
-        message: "No Token! ❌",
-        type: "error",
-      });
+    if (!authHeader) {
+      return res.status(401).json({ message: "No Token! ❌", type: "error" });
     }
 
-    // Verify the token
-    const decoded = verify(token, process.env.ACCESS_TOKEN_SECRET);
-    console.log("Decoded token:", decoded);
+    const idToken = authHeader.split(" ")[1];
 
-    // Find the user associated with the token
-    const user = await User.findById(decoded.id);
+    // Verify the ID token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    // Find the user in MongoDB
+    let user = await User.findOne({ uid: decodedToken.uid });
+
     if (!user) {
-      console.log("User not found!");
-      return res.status(401).json({
-        message: "User doesn't exist! 🔍",
-        type: "error",
+      // If the user doesn't exist, create a new user record
+      user = new User({
+        uid: decodedToken.uid,
+        email: decodedToken.email,
+        username: decodedToken.email.split("@")[0],
       });
-    }
 
-    // Check the refresh token (if provided)
-    const refreshToken =
-      req.headers["x-refresh-token"] || req.cookies.refreshToken;
-    if (refreshToken && user.refreshToken !== refreshToken) {
-      console.log("Invalid refresh token!");
-      return res.status(401).json({
-        message: "Invalid refresh token! 🔑",
-        type: "error",
-      });
+      await user.save();
     }
 
     // Attach the user to the request object
     req.user = user;
     next();
   } catch (error) {
-    console.log("Error in protect middleware:", error.message);
     return res.status(401).json({
       message: "Invalid Token! 🤔",
       type: "error",

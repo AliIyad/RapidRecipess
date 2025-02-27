@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { Button, Label, Input } from "reactstrap";
 import "../CSS/Settings.css";
 
 const Settings = () => {
-  const { user: authUser, isAuthenticated, loading } = useAuth();
-  const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
+  const { user, loading, token } = useAuth();
+  const [userData, setUserData] = useState({});
   const [notificationPrefs, setNotificationPrefs] = useState({
     like: false,
     comment: false,
@@ -22,46 +20,67 @@ const Settings = () => {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (isAuthenticated && authUser.id) {
-      axios
-        .get(`http://localhost:6969/users/${authUser.id}`)
-        .then((response) => {
-          setUserData(response.data);
-          setNotificationPrefs(response.data.notificationPreferences || {});
-          setPreferredTags(response.data.preferredTags || []);
-        })
-        .catch((error) => console.error("Error fetching user data:", error));
-    }
-    axios
-      .get("http://localhost:6969/tags")
-      .then((response) => setAvailableTags(response.data))
-      .catch((error) => console.error("Error fetching tags:", error));
-  }, [isAuthenticated, authUser.id]);
+    const fetchUserData = async () => {
+      if (user && token) {
+        try {
+          const response = await axios.get(
+            `http://localhost:6969/auth/profile`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setUserData(response.data.user);
+          setPreferredTags(response.data.user.preferredTags || []);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    const fetchAvailableTags = async () => {
+      try {
+        const response = await axios.get("http://localhost:6969/tags");
+        setAvailableTags(response.data);
+      } catch (error) {
+        console.error("Error fetching available tags:", error);
+      }
+    };
+
+    fetchUserData();
+    fetchAvailableTags();
+  }, [user, token]);
 
   const handlePrefChange = (e) => {
     const { name, checked } = e.target;
     setNotificationPrefs((prevPrefs) => ({ ...prevPrefs, [name]: checked }));
   };
 
-  const handleTagSelection = (tag) => {
+  const handleTagSelection = (tagId) => {
     setPreferredTags((prevTags) =>
-      prevTags.includes(tag)
-        ? prevTags.filter((t) => t !== tag)
-        : [...prevTags, tag]
+      prevTags.includes(tagId)
+        ? prevTags.filter((t) => t !== tagId)
+        : [...prevTags, tagId]
     );
   };
 
-  const savePreferences = async () => {
+  const saveNotificationPreferences = async () => {
     if (!userData) {
       setMessage("User data not loaded. Please try again.");
       return;
     }
     try {
       await axios.put(
-        `http://localhost:6969/users/${userData._id}/preferences`,
+        `http://localhost:6969/users/${userData.id}/notification-preferences`,
         {
           notificationPreferences: notificationPrefs,
           preferredTags,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       setMessage("Preferences saved successfully!");
@@ -71,13 +90,42 @@ const Settings = () => {
     }
   };
 
+  const saveTagPreferences = async () => {
+    if (!userData) {
+      setMessage("User data not loaded. Please try again.");
+      return;
+    }
+    try {
+      await axios.put(
+        `http://localhost:6969/users/${userData.id}/preferred-tags`,
+        {
+          preferredTags,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setMessage("Tag preferences saved successfully!");
+    } catch (error) {
+      console.error("Error saving tag preferences:", error);
+      setMessage("Failed to save tag preferences. Please try again.");
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
-  if (!isAuthenticated) return <div>You are not logged in.</div>;
+  if (!user) return <div>You are not logged in.</div>;
   if (!userData) return <div>Loading user data...</div>;
 
   return (
     <div className='settings-page'>
-      <h1>Settings</h1>
+      <div className='profile-header'>
+        <h1>Welcome, {userData.username}!</h1>
+        <p>Email: {userData.email}</p>
+        <p>Verified: {userData.verified ? "Yes" : "No"}</p>
+      </div>
+
       <div className='settings-section'>
         <h2>Notification Preferences</h2>
         <div className='notification-preferences'>
@@ -93,23 +141,39 @@ const Settings = () => {
             </label>
           ))}
         </div>
+        <Button
+          color='primary'
+          onClick={saveNotificationPreferences}
+          className='btn-block'>
+          Save Notification Preferences
+        </Button>
       </div>
+
       <div className='settings-section'>
         <h2>Preferred Tags</h2>
-        <div className='tag-selection'>
+        <div className='tag-preferences'>
           {availableTags.map((tag) => (
-            <button
-              key={tag._id}
-              className={preferredTags.includes(tag._id) ? "selected" : ""}
-              onClick={() => handleTagSelection(tag._id)}>
+            <Label key={tag._id} check>
+              <Input
+                type='checkbox'
+                name={tag._id}
+                checked={preferredTags.includes(tag._id)}
+                onChange={() => handleTagSelection(tag._id)}
+              />
               {tag.name}
-            </button>
+            </Label>
           ))}
         </div>
+        <Button
+          color='primary'
+          onClick={saveTagPreferences}
+          className='btn-block'>
+          Save Tag Preferences
+        </Button>
       </div>
-      <button onClick={savePreferences}>Save Preferences</button>
-      <button onClick={() => navigate("/start")}>Set Prefferred Tags</button>
+
       {message && <p className='message'>{message}</p>}
+
       <div className='settings-section'>
         <h2>Account Information</h2>
         <p>

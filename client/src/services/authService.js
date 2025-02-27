@@ -1,99 +1,68 @@
 import axios from "axios";
-import cookies from "js-cookie";
+import { app } from "../../firebase";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+import { useAuth } from "../context/AuthContext"; // Import the AuthContext
 
-const API_URL = "http://localhost:6969/";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  credentials: "include",
+  headers: { "Content-Type": "application/json" },
 });
 
-// Add a request interceptor to dynamically set the Authorization header
-api.interceptors.request.use((config) => {
-  const token = cookies.get("accessToken");
-
-  console.log(token);
+// Attach Firebase token to requests using context
+api.interceptors.request.use(async (config) => {
+  const { token } = useAuth(); // Get the token from the context
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
-// Add a response interceptor to handle token refreshing
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+// Firebase Registration
+export const registerUser = async ({ email, password, username }) => {
+  const auth = getAuth();
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+  await userCredential.user.updateProfile({ displayName: username });
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+  const idToken = await userCredential.user.getIdToken();
+  const response = await api.post("/auth/register", { idToken });
 
-      try {
-        const response = await api.post(
-          "/auth/refresh_token",
-          {},
-          {
-            withCredentials: true,
-          }
-        );
-
-        if (response.data.accessToken) {
-          cookies.set("accessToken", response.data.accessToken, { path: "/" });
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        return Promise.reject(error);
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
-
-export const registerUser = async (userData) => {
-  try {
-    const response = await api.post("/auth/register", userData);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: "Error during registration" };
-  }
+  return response.data;
 };
 
-export const loginUser = async (credentials) => {
-  try {
-    const response = await api.post("/auth/login", credentials);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: "Error during login" };
-  }
+// Firebase Login
+export const loginUser = async ({ email, password }) => {
+  const auth = getAuth();
+  const userCredential = await signInWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+
+  const idToken = await userCredential.user.getIdToken();
+  const response = await api.post("/auth/login", { idToken });
+
+  return response.data;
 };
 
+// Firebase Logout
 export const logoutUser = async () => {
-  try {
-    const response = await api.post("/auth/logout");
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: "Error during logout" };
-  }
-};
-
-export const verifyAuth = async (accessToken, refreshToken) => {
-  try {
-    const response = await api.get("/protected", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "x-refresh-token": refreshToken,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: "Error verifying authentication" };
-  }
+  const auth = getAuth();
+  await signOut(auth);
+  await api.post("/auth/logout");
 };
 
 export default api;

@@ -9,17 +9,14 @@ const commentSchema = new mongoose.Schema({
   },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   parentCommentId: { type: mongoose.Schema.Types.ObjectId, ref: "Comment" },
-  Interactions: [
+  replies: [
     {
-      userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
-      reactionType: { type: String, enum: ["like", "dislike"], required: true },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
     },
   ],
   createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model("Comment", commentSchema);
+const Comment = mongoose.model("Comment", commentSchema);
+module.exports = Comment;

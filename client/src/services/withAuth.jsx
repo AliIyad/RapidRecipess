@@ -1,17 +1,33 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { getAuth, onAuthStateChanged, getIdToken } from "firebase/auth";
 import AuthModal from "../components/AuthModal";
 import { useNavigate } from "react-router-dom";
 
 const withAuth = (WrappedComponent) => {
   return function AuthenticatedComponent(props) {
     const navigate = useNavigate();
-    const { user, loading, setLoading, isAuthenticated, verifyTokens } =
-      useAuth();
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
-      verifyTokens();
+      const auth = getAuth(); // Firebase Auth
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          setUser(firebaseUser);
+          setIsAuthenticated(true);
+          // Optionally, you can fetch the Firebase ID Token if needed
+          const token = await getIdToken(firebaseUser);
+          console.log("Firebase ID Token:", token); // Handle the token if necessary
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+        setLoading(false);
+      });
+
+      return () => unsubscribe(); // Clean up the listener on unmount
     }, []);
 
     useEffect(() => {
@@ -24,13 +40,14 @@ const withAuth = (WrappedComponent) => {
           setIsModalOpen(false); // Hide modal if authenticated
         }
       }
-    }, [loading, isAuthenticated, user]);
+    }, [loading, isAuthenticated]);
 
     // Handle modal close
     const handleModalClose = () => {
       setIsModalOpen(false);
       if (!isAuthenticated) {
-        //navigate("/"); // Redirect to home if not authenticated
+        // Optionally navigate to home or login page if user is not authenticated
+        navigate("/"); // Redirect to home or a login page if not authenticated
       }
     };
 

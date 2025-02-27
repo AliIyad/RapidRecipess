@@ -1,131 +1,96 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardBody, CardTitle, CardText, Button, Input } from "reactstrap";
-import api from "../services/authService"; // Import the api instance
-import { useParams } from "react-router-dom";
+import {
+  Card,
+  CardBody,
+  CardTitle,
+  CardText,
+  Button,
+  Input,
+  Spinner,
+  Alert,
+} from "reactstrap";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 const RecipeComments = ({ recipeId }) => {
+  const { user, token, loading: authLoading } = useAuth();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [replyContent, setReplyContent] = useState("");
+  const [activeReply, setActiveReply] = useState(null);
 
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        setLoading(true);
-        const response = await api.get(`/comments/recipe/${recipeId}`);
-        console.log("Fetched Comments:", response.data); // Debugging log
-        setComments(response.data);
-      } catch (error) {
-        console.error("Error fetching comments:", error);
-        setError("Failed to fetch comments. Please try again later.");
+        const response = await axios.get(
+          `http://localhost:6969/comments/recipe/${recipeId}`
+        );
+        setComments(response.data.comments);
+      } catch (err) {
+        setError("Failed to load comments.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchComments();
-    fetchInteractionCounts("comment", recipeId);
   }, [recipeId]);
 
-  // Add a new comment
   const handleAddComment = async () => {
-    if (!newComment.trim()) {
-      setError("Comment cannot be empty.");
-      return;
-    }
+    if (!newComment.trim()) return setError("Comment cannot be empty.");
+    if (!user) return setError("You must be logged in.");
 
     try {
-      const response = await api.post("/comments", {
-        content: newComment,
-        recipeId,
-      }); // Use the api instance
+      const response = await axios.post(
+        `http://localhost:6969/comments`,
+        { content: newComment, recipeId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setComments((prevComments) => [response.data, ...prevComments]);
       setNewComment("");
-      setError(null);
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      setError("Failed to add comment. Please try again later.");
+    } catch (err) {
+      setError("Failed to post comment.");
     }
   };
 
-  // Like or dislike a comment
-  const handleInteraction = async (contentType, contentId, reactionType) => {
+  const handleReplyComment = async (commentId) => {
+    if (!replyContent.trim()) return setError("Reply cannot be empty.");
+    if (!user) return setError("You must be logged in.");
+
     try {
-      // Optimistically update the UI
+      const response = await axios.post(
+        `http://localhost:6969/comments/reply`,
+        { content: replyContent, parentCommentId: commentId, recipeId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setComments((prevComments) =>
         prevComments.map((comment) =>
-          comment._id === contentId
-            ? {
-                ...comment,
-                Interactions: [
-                  ...comment.Interactions,
-                  { reactionType, userId: { _id: user.id } }, // Use the actual user ID
-                ],
-              }
+          comment._id === commentId
+            ? { ...comment, replies: [response.data, ...comment.replies] }
             : comment
         )
       );
-
-      // Send the interaction to the backend
-      await api.post("/interaction", {
-        contentType,
-        contentId,
-        reactionType,
-      });
-
-      // Refetch interaction counts for updated data
-      fetchInteractionCounts(contentType, contentId);
-    } catch (error) {
-      console.error("Error adding interaction:", error);
-      setError("Failed to add interaction. Please try again later.");
-
-      // Revert the optimistic update if the request fails
-      setComments((prevComments) =>
-        prevComments.map((comment) =>
-          comment._id === contentId
-            ? {
-                ...comment,
-                Interactions: comment.Interactions.filter(
-                  (i) => i.userId._id !== user.id
-                ),
-              }
-            : comment
-        )
-      );
+      setReplyContent("");
+      setActiveReply(null);
+    } catch (err) {
+      setError("Failed to post reply.");
     }
   };
 
-  // Fetch interaction counts (like/dislike) for a comment
-  const fetchInteractionCounts = async (contentType, contentId) => {
-    try {
-      const response = await api.get(
-        `/interaction/count/${contentType}/${contentId}`
-      );
-      setComments((prevComments) =>
-        prevComments.map((comment) =>
-          comment._id === contentId
-            ? {
-                ...comment,
-                likeCount: response.data.likes,
-                dislikeCount: response.data.dislikes,
-              }
-            : comment
-        )
-      );
-    } catch (error) {
-      console.error("Error fetching interaction counts:", error);
-    }
+  const toggleReplyForm = (commentId) => {
+    setActiveReply(activeReply === commentId ? null : commentId);
+    setReplyContent("");
   };
+
+  if (authLoading) return <Spinner color='primary' />;
+  if (!user) return <div>You must be logged in to view comments.</div>;
 
   return (
     <div className='recipe-comments mt-5'>
       <h3>Comments</h3>
-      {error && <p className='text-danger'>{error}</p>}
+      {error && <Alert color='danger'>{error}</Alert>}
 
-      {/* Add a new comment */}
       <div className='add-comment mb-4'>
         <Input
           type='textarea'
@@ -133,48 +98,82 @@ const RecipeComments = ({ recipeId }) => {
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
         />
-        <Button color='primary' onClick={handleAddComment} className='mt-2'>
-          Post Comment
+        <Button
+          color='primary'
+          onClick={handleAddComment}
+          className='mt-2'
+          disabled={loading || !newComment.trim()}>
+          {loading ? <Spinner size='sm' color='light' /> : "Post Comment"}
         </Button>
       </div>
 
-      {/* Display comments */}
       {loading ? (
-        <p className='text-muted'>Loading comments...</p>
-      ) : comments.length > 0 ? (
+        <Spinner color='primary' />
+      ) : comments.length === 0 ? (
+        <p>No comments yet. Be the first to comment!</p>
+      ) : (
         comments.map((comment) => (
-          <Card key={comment._id} className='mb-3'>
+          <Card key={comment._id} className='mb-3 shadow-sm rounded-lg'>
             <CardBody>
               <CardTitle tag='h6'>
-                {comment.userId?.username || "Anonymous"}
+                {comment.userId ? comment.userId.username : "Anonymous"}
+                <span className='text-muted ml-2'>
+                  {new Date(comment.createdAt).toLocaleString()}
+                </span>
               </CardTitle>
               <CardText>{comment.content}</CardText>
-              <div className='interaction-buttons'>
+
+              {user && (
                 <Button
-                  outline
-                  color='primary'
-                  size='sm'
-                  onClick={() =>
-                    handleInteraction("comment", comment._id, "like")
-                  }>
-                  Like ({comment.likeCount || 0})
+                  color='link'
+                  onClick={() => toggleReplyForm(comment._id)}
+                  className='btn-reply'>
+                  Reply
                 </Button>
-                <Button
-                  outline
-                  color='secondary'
-                  size='sm'
-                  className='ms-2'
-                  onClick={() =>
-                    handleInteraction("comment", comment._id, "dislike")
-                  }>
-                  Dislike ({comment.dislikeCount || 0})
-                </Button>
-              </div>
+              )}
+
+              {activeReply === comment._id && (
+                <div className='reply-form mt-2'>
+                  <Input
+                    type='textarea'
+                    placeholder='Write a reply...'
+                    value={replyContent}
+                    onChange={(e) => setReplyContent(e.target.value)}
+                  />
+                  <Button
+                    color='primary'
+                    onClick={() => handleReplyComment(comment._id)}
+                    className='mt-2'
+                    disabled={!replyContent.trim()}>
+                    {loading ? (
+                      <Spinner size='sm' color='light' />
+                    ) : (
+                      "Post Reply"
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {comment.replies && (
+                <div className='replies-container ml-4 mt-3'>
+                  {comment.replies.map((reply) => (
+                    <Card key={reply._id} className='mb-2 shadow-sm rounded-lg'>
+                      <CardBody>
+                        <CardTitle tag='h6'>
+                          <span className='text-muted ml-2'>
+                            {reply.userId ? reply.userId.username : "Anonymous"}
+                          </span>
+                        </CardTitle>
+                        <CardText>{reply.content}</CardText>
+                        {new Date(reply.createdAt).toLocaleString()}
+                      </CardBody>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardBody>
           </Card>
         ))
-      ) : (
-        <p>No comments yet. Be the first to comment!</p>
       )}
     </div>
   );

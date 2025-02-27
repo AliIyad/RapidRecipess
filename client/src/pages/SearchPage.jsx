@@ -10,6 +10,7 @@ import {
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../CSS/SearchPage.css"; // Import the new CSS
+import { useParams } from "react-router-dom";
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ const SearchPage = () => {
       const response = await axios.get(
         `http://localhost:6969/recipe/${searchType}/${searchTerm}`
       );
+      console.log(response.data);
       setRecipes(response.data);
     } catch (error) {
       console.error("Error searching recipes:", error);
@@ -46,6 +48,10 @@ const SearchPage = () => {
 
   const handleNavigateSearch = () => {
     navigate(`/search?query=${searchTerm}&type=${searchType}`);
+  };
+
+  const handleCardClick = (recipeId) => {
+    navigate(`/recipe/${recipeId}`); // Navigate to the specific recipe page
   };
 
   return (
@@ -85,12 +91,19 @@ const SearchPage = () => {
         {error && <p className='error-message'>{error}</p>}
         {recipes.length > 0 ? (
           recipes.map((recipe) => (
-            <div key={recipe.id} className='recipe-card'>
+            <div
+              key={recipe._id}
+              className='recipe-card'
+              onClick={() => handleCardClick(recipe._id)}>
               <img
                 src={recipe.imageUrl || "https://via.placeholder.com/200"}
                 alt={recipe.title}
+                className='recipe-card-image'
               />
-              <h3>{recipe.title}</h3>
+              <div className='recipe-card-content'>
+                <h3>{recipe.title}</h3>
+                <p>{recipe.description}</p> {/* Optional description */}
+              </div>
             </div>
           ))
         ) : (

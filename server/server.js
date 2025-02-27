@@ -9,6 +9,7 @@ const RecipeRouter = require("./src/routers/recipe.routes");
 const UserRouter = require("./src/routers/user.routes");
 const CommentRouter = require("./src/routers/comment.routes");
 const InteractionRouter = require("./src/routers/interaction.routes");
+const TagRouter = require("./src/routers/tags.routes");
 const { protect } = require("./src/utils/protected");
 
 // Load environment variables
@@ -56,6 +57,7 @@ app.get("/protected", protect, (req, res) => {
     },
   });
 });
+app.use("/tags", TagRouter);
 
 // Start server
 const PORT = process.env.PORT || 6969;

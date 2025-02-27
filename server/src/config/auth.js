@@ -1,46 +1,32 @@
+// Express Router Setup
 const express = require("express");
 const router = express.Router();
-const { hash } = require("bcrypt");
-const { verify } = require("jsonwebtoken");
-
+const admin = require("../config/admin");
 const User = require("../models/user.model");
-const {
-  sendAccessToken,
-  sendRefreshToken,
-  createAccessToken,
-  createRefreshToken,
-  createPasswordResetToken,
-} = require("../utils/tokens");
-
 const { protect } = require("../utils/protected");
 
+const auth = admin.auth();
+
+// Register User
 router.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    const user = await User.findOne({ email: email });
 
-    if (user)
-      return res.status(400).json({
-        message: "User Already Exists, Try logging in. 👌🏼",
-        type: "warning",
-      });
-
-    const passwordHash = await hash(password, 10);
-    const newUser = new User({
-      username: username,
-      email: email,
-      password: passwordHash,
+    // Create user in Firebase Authentication
+    const userRecord = await auth.createUser({
+      email,
+      password,
+      displayName: username,
     });
 
-    const accessToken = createAccessToken(newUser._id);
-    const refreshToken = createRefreshToken(newUser._id);
+    // Save user in MongoDB
+    const newUser = new User({
+      uid: userRecord.uid,
+      username,
+      email,
+    });
 
-    newUser.refreshToken = refreshToken;
     await newUser.save();
-
-    // Set tokens in cookies
-    sendRefreshToken(res, refreshToken);
-    sendAccessToken(res, accessToken);
 
     res.status(200).json({
       message: "User created successfully! 👩🏼‍🍳",
@@ -60,32 +46,22 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// Login User
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email: email });
-    if (!user)
-      return res.status(401).json({
-        type: "error",
-        message: "User does not exist! 👀",
-      });
+    const { idToken } = req.body;
 
-    const passwordMatch = await user.comparePassword(password);
-    if (!passwordMatch)
-      return res.status(401).json({
-        type: "error",
-        message: "Incorrect password! 🤫",
-      });
+    // Verify the ID token
+    const decodedToken = await auth.verifyIdToken(idToken);
 
-    const accessToken = createAccessToken(user._id);
-    const refreshToken = createRefreshToken(user._id);
+    // Find the user in MongoDB
+    const user = await User.findOne({ uid: decodedToken.uid });
 
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    // Set tokens in cookies
-    sendRefreshToken(res, refreshToken);
-    sendAccessToken(res, accessToken);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User not found!", type: "error" });
+    }
 
     res.status(200).json({
       message: "Login successful! 🎉",
@@ -105,87 +81,73 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Logout User
 router.post("/logout", async (req, res) => {
-  res.clearCookie("accessToken", { path: "/" });
-  res.clearCookie("refreshToken", { path: "/" });
-  res.status(200).json({
-    message: "Logged out successfully",
-    type: "success",
-  });
-});
-
-router.post("/refresh_token", async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      return res.status(401).json({
-        message: "No refresh token found! 🤫",
-        type: "error",
-      });
-    }
+    const { idToken } = req.body;
+    const decodedToken = await auth.verifyIdToken(idToken);
 
-    let payload;
-    try {
-      payload = verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-    } catch (error) {
-      return res.status(401).json({
-        message: "Invalid refresh token! 🤫",
-        type: "error",
-      });
-    }
+    await auth.revokeRefreshTokens(decodedToken.uid);
 
-    const user = await User.findById(payload.id);
-    if (!user || user.refreshToken !== refreshToken) {
-      return res.status(401).json({
-        message: "Invalid refresh token! 🤫",
-        type: "error",
-      });
-    }
-
-    const newAccessToken = createAccessToken(user._id);
-    const newRefreshToken = createRefreshToken(user._id);
-
-    user.refreshToken = newRefreshToken;
-    await user.save();
-
-    sendRefreshToken(res, newRefreshToken);
-    sendAccessToken(res, newAccessToken);
-
-    res.json({
-      message: "Tokens refreshed successfully! 👏🏼",
+    res.status(200).json({
+      message: "Logged out successfully",
       type: "success",
     });
   } catch (error) {
     res.status(500).json({
       type: "error",
-      message: "Error refreshing token! 💀",
+      message: "Error logging out",
       error: error.message,
     });
   }
 });
 
+// Protected Route
 router.get("/protected", protect, async (req, res) => {
+  res.status(200).json({
+    message: "You're logged in!",
+    type: "success",
+    user: {
+      id: req.user._id,
+      email: req.user.email,
+      username: req.user.username,
+    },
+  });
+});
+
+router.get("/profile", protect, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({
-        message: "You are not logged in.",
-        type: "error",
-      });
+    const userId = req.user._id;
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User not found!", type: "error" });
     }
 
-    res.json({
-      message: "You're logged in!",
+    res.status(200).json({
+      message: "Profile fetched successfully!",
       type: "success",
       user: {
-        id: req.user._id,
-        email: req.user.email,
-        username: req.user.username,
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        preferredTags: user.preferredTags,
+        notificationPreferences: user.notificationPreferences,
+        createdAt: user.createdAt,
+        recipes: user.recipes,
+        comments: user.comments,
+        followers: user.followers,
+        friends: user.friends,
+        notifications: user.notifications,
+        verified: user.verified,
       },
     });
   } catch (error) {
     res.status(500).json({
       type: "error",
-      message: "Error accessing protected route",
+      message: "Error fetching profile!",
       error: error.message,
     });
   }
