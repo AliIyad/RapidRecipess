@@ -6,25 +6,36 @@ import {
   createUserWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { useAuth } from "../context/AuthContext"; // Import the AuthContext
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Create axios instance with base configuration
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
-  headers: { "Content-Type": "application/json" },
 });
 
-// Attach Firebase token to requests using context
+// Configure axios to handle different content types
 api.interceptors.request.use(async (config) => {
-  const { token } = useAuth(); // Get the token from the context
-
-  if (token) {
+  // Get current user token
+  const auth = getAuth();
+  const user = auth.currentUser;
+  
+  if (user) {
+    const token = await user.getIdToken();
     config.headers.Authorization = `Bearer ${token}`;
   }
 
+  // Don't set Content-Type for FormData
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  } else {
+    config.headers['Content-Type'] = 'application/json';
+  }
+
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 // Firebase Registration
