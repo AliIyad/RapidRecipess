@@ -8,15 +8,37 @@ const recipeService = require("../services/recipe.services");
 
 const mongoose = require("mongoose");
 
+// Get all recipes with pagination
+router.get("/", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const recipes = await Recipe.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('tags', 'name')
+      .populate('user', 'username');
+
+    res.status(200).json(recipes);
+  } catch (error) {
+    console.error("Error fetching recipes:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get("/recommended", async (req, res) => {
   try {
     const { tagIds } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
 
     if (!tagIds) {
       return res.status(400).json({ message: "No tagIds provided" });
     }
-
-    console.log("Raw tagIds:", tagIds);
 
     let tagArray;
     if (Array.isArray(tagIds)) {
@@ -29,25 +51,30 @@ router.get("/recommended", async (req, res) => {
       throw new Error("tagIds must be an array or a comma-separated string");
     }
 
-    console.log("Converted tagArray:", tagArray);
+    const recipes = await Recipe.find({ tags: { $in: tagArray } })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('tags', 'name')
+      .populate('user', 'username');
 
-    const recipes = await recipeService.getRecipesByTagIds(tagArray);
     res.status(200).json(recipes);
   } catch (error) {
-    console.error("Error fetching recommended recipes:", error.message);
+    console.error("Error fetching recommended recipes:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
 router.get("/most-liked", async (req, res) => {
-  const { limit = 5 } = req.query; // Default to 5 recipes if no limit is provided
+  const { limit = 5 } = req.query;
+  const page = parseInt(req.query.page) || 1;
+  const skip = (page - 1) * limit;
 
   try {
-    // Fetch recipes sorted by likes in descending order
     const recipes = await Recipe.aggregate([
       {
         $lookup: {
-          from: "interactions", // Join with the interactions collection
+          from: "interactions",
           localField: "_id",
           foreignField: "contentId",
           as: "interactions",
@@ -66,8 +93,9 @@ router.get("/most-liked", async (req, res) => {
           },
         },
       },
-      { $sort: { likeCount: -1 } }, // Sort by likeCount in descending order
-      { $limit: parseInt(limit) }, // Limit the number of results
+      { $sort: { likeCount: -1 } },
+      { $skip: skip },
+      { $limit: parseInt(limit) },
     ]);
 
     res.status(200).json(recipes);
@@ -77,14 +105,13 @@ router.get("/most-liked", async (req, res) => {
   }
 });
 
-router.get("/", recipeController.getAllRecipes);
-
 router.post(
   "/",
   protect,
   upload.single("image"),
   recipeController.createRecipe
 );
+
 router.put(
   "/:id",
   protect,
@@ -93,7 +120,7 @@ router.put(
 );
 
 router.get("/:id", recipeController.getRecipeById);
-router.delete("/:id", recipeController.deleteRecipe);
+router.delete("/:id", protect, recipeController.deleteRecipe);
 router.get("/user/:id", recipeController.getRecipesByUser);
 router.get("/ingredient/:ingredient", recipeController.getRecipesByIngredient);
 

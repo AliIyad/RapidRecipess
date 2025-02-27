@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Card, CardBody, CardTitle, CardText, Button } from "reactstrap";
+import { Card, CardBody, CardTitle, CardText, Button, Spinner } from "reactstrap";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../CSS/RecipeDashboard.css";
@@ -10,14 +10,15 @@ const RecipeDashboard = ({ userId }) => {
   const [userData, setUserData] = useState({});
   const [recipes, setRecipes] = useState([]);
   const [error, setError] = useState(null);
-  const [skip, setSkip] = useState(0);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [preferredTags, setPreferredTags] = useState([]);
+  const ITEMS_PER_PAGE = 5;
 
   useEffect(() => {
     setRecipes([]);
-    setSkip(0);
+    setPage(1);
     setHasMore(true);
   }, [userId]);
 
@@ -44,40 +45,20 @@ const RecipeDashboard = ({ userId }) => {
     fetchUserData();
   }, [user, token]);
 
-  useEffect(() => {
-    const fetchUserTags = async () => {
-      if (!userData.id) return; // Prevents request if userData.id is not set
-
-      try {
-        const response = await axios.get(
-          `http://localhost:6969/users/${userData.id}/preferred-tags`
-        );
-        setPreferredTags(response.data);
-      } catch (error) {
-        console.error("Error fetching preferred tags:", error);
-      }
-    };
-
-    fetchUserTags();
-  }, [userData.id]); // Runs only when userData.id is available
-
-  // Fetch recipes based on preferred tags
+  // Fetch recipes with pagination
   const fetchRecipes = async () => {
-    if (loading || !hasMore || !preferredTags.length) return;
+    if (loading || !hasMore) return;
 
     setLoading(true);
     try {
-      const response = await axios.get(
-        `http://localhost:6969/recipe/recommended`,
-        {
-          params: {
-            tagIds: preferredTags.join(","), // Pass preferred tags as query params
-            limit: 5,
-            skip,
-          },
-        }
-      );
+      let url = `http://localhost:6969/recipe?page=${page}&limit=${ITEMS_PER_PAGE}`;
+      
+      // If there are preferred tags, use them as a filter
+      if (preferredTags.length > 0) {
+        url = `http://localhost:6969/recipe/recommended?tagIds=${preferredTags.join(",")}&page=${page}&limit=${ITEMS_PER_PAGE}`;
+      }
 
+      const response = await axios.get(url);
       console.log("API Response:", response.data);
 
       if (!Array.isArray(response.data)) {
@@ -93,7 +74,7 @@ const RecipeDashboard = ({ userId }) => {
       }
 
       setRecipes((prevRecipes) => [...prevRecipes, ...newRecipes]);
-      setSkip((prevSkip) => prevSkip + newRecipes.length);
+      setPage((prevPage) => prevPage + 1);
     } catch (error) {
       console.error("Error fetching recipes:", error);
       setError("Failed to fetch recipes. Please try again later.");
@@ -102,11 +83,22 @@ const RecipeDashboard = ({ userId }) => {
     }
   };
 
+  // Initial fetch
   useEffect(() => {
-    if (preferredTags.length > 0) {
-      fetchRecipes();
-    }
-  }, [preferredTags]);
+    fetchRecipes();
+  }, []); // Only run once on component mount
+
+  const handleLoadMore = () => {
+    fetchRecipes();
+  };
+
+  if (userLoading) {
+    return (
+      <div className="text-center mt-5">
+        <Spinner color="primary" />
+      </div>
+    );
+  }
 
   return (
     <div className='dashboard mt-5'>
@@ -139,10 +131,10 @@ const RecipeDashboard = ({ userId }) => {
                     </CardText>
                     <div className='interaction-meters'>
                       <p>
-                        <strong>Likes:</strong> {recipe.likeCount}
+                        <strong>Likes:</strong> {recipe.likeCount || 0}
                       </p>
                       <p>
-                        <strong>Dislikes:</strong> {recipe.dislikeCount}
+                        <strong>Dislikes:</strong> {recipe.dislikeCount || 0}
                       </p>
                     </div>
                   </CardBody>
@@ -151,14 +143,26 @@ const RecipeDashboard = ({ userId }) => {
             </div>
           ))
         ) : (
-          <p>No recipes found matching your preferences.</p>
+          <p>No recipes found. Be the first to share a recipe!</p>
         )}
       </div>
 
       {hasMore && (
-        <div className='text-center mt-4'>
-          <Button color='primary' onClick={fetchRecipes} disabled={loading}>
-            {loading ? "Loading..." : "Load More"}
+        <div className='text-center mt-4 mb-4'>
+          <Button 
+            color='primary' 
+            onClick={handleLoadMore} 
+            disabled={loading}
+            className="px-4"
+          >
+            {loading ? (
+              <>
+                <Spinner size="sm" className="me-2" />
+                Loading...
+              </>
+            ) : (
+              'Load More'
+            )}
           </Button>
         </div>
       )}
