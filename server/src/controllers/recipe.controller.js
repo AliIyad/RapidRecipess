@@ -128,6 +128,15 @@ const getRecipesByIngredient = async (req, res) => {
   }
 };
 
+const getRecipesByName = async (req, res) => {
+  try {
+    const recipes = await recipeService.getRecipesByName(req.params.title);
+    res.status(200).json(recipes);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getAllRecipes,
   createRecipe,
@@ -136,4 +145,5 @@ module.exports = {
   getRecipeById,
   getRecipesByUser,
   getRecipesByIngredient,
+  getRecipesByName,
 };

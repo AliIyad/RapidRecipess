@@ -78,6 +78,18 @@ const getRecipesByIngredient = async (ingredient) => {
   }
 };
 
+const getRecipesByName = async (title) => {
+  try {
+    const recipes = await Recipe.find({
+      title: { $regex: title, $options: "i" }, // Case-insensitive search
+    });
+    return recipes;
+  } catch (error) {
+    console.error("Error searching recipes by name:", error);
+    throw new Error("Error searching recipes by name");
+  }
+};
+
 const getRecipesByTagIds = async (tagIds, limit = 5, skip = 0) => {
   try {
     console.log("Received tagIds in getRecipesByTagIds:", tagIds);
@@ -107,4 +119,5 @@ module.exports = {
   getRecipesByUser,
   getRecipesByIngredient,
   getRecipesByTagIds,
+  getRecipesByName,
 };

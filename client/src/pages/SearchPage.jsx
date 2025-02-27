@@ -35,15 +35,25 @@ const SearchPage = () => {
 
   const handleSearch = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:6969/recipe/${searchType}/${searchTerm}`
-      );
+      let searchUrl = "";
+      if (searchType === "ingredient") {
+        searchUrl = `http://localhost:6969/recipe/ingredient/${searchTerm}`;
+      } else if (searchType === "name") {
+        searchUrl = `http://localhost:6969/recipe/name/${searchTerm}`;
+      }
+
+      const response = await axios.get(searchUrl);
       console.log(response.data);
       setRecipes(response.data);
     } catch (error) {
       console.error("Error searching recipes:", error);
       setError("Failed to search recipes. Please try again later.");
     }
+  };
+
+  // Helper function to check if a string is a valid ObjectId
+  const isValidObjectId = (id) => {
+    return /^[0-9a-fA-F]{24}$/.test(id);
   };
 
   const handleNavigateSearch = () => {
@@ -69,19 +79,13 @@ const SearchPage = () => {
             <DropdownItem onClick={() => setSearchType("ingredient")}>
               Ingredient
             </DropdownItem>
-            <DropdownItem onClick={() => setSearchType("tag")}>
-              Tag
-            </DropdownItem>
-            <DropdownItem onClick={() => setSearchType("difficulty")}>
-              Difficulty
-            </DropdownItem>
           </DropdownMenu>
         </Dropdown>
         <Input
           type='text'
           placeholder={`Search by ${searchType}...`}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)} // Update search term
         />
         <Button color='primary' onClick={handleNavigateSearch}>
           Search

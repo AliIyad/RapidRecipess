@@ -7,6 +7,7 @@ const Recipe = require("../models/recipe.model");
 const recipeService = require("../services/recipe.services");
 
 const mongoose = require("mongoose");
+const { route } = require("./user.routes");
 
 router.get("/recommended", async (req, res) => {
   try {
@@ -95,6 +96,14 @@ router.put(
 router.get("/:id", recipeController.getRecipeById);
 router.delete("/:id", recipeController.deleteRecipe);
 router.get("/user/:id", recipeController.getRecipesByUser);
+
+// Search by name
+router.get("/name/:title", recipeController.getRecipesByName);
+
+// Search by ingredient
 router.get("/ingredient/:ingredient", recipeController.getRecipesByIngredient);
+
+// Get all recipes (Optional)
+router.get("/", recipeController.getAllRecipes);
 
 module.exports = router;
