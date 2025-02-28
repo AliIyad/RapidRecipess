@@ -1,11 +1,17 @@
 .admin-panel {
     padding: 2rem;
     margin-top: 80px;
+    background: #f8f9fa;
+    min-height: calc(100vh - 80px);
   }
   
   .admin-panel h1 {
     margin-bottom: 2rem;
-    color: #333;
+    color: #2c3e50;
+    font-weight: 600;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 0.5rem;
+    display: inline-block;
   }
   
   .admin-stats {
@@ -18,8 +24,15 @@
   .stat-card {
     background: white;
     padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
   
   .stat-card h4 {
@@ -33,29 +46,69 @@
   }
   
   .admin-tabs {
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
     margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
   
   .admin-tabs .btn {
     margin-right: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    padding: 0.5rem 1.25rem;
+    transition: all 0.2s;
+  }
+  
+  .admin-tabs .btn:hover {
+    transform: translateY(-2px);
+  }
+  
+  .admin-tabs .btn-primary {
+    background: #3498db;
+    border-color: #3498db;
+  }
+  
+  .admin-tabs .btn-secondary {
+    background: #f8f9fa;
+    border-color: #e9ecef;
+    color: #2c3e50;
+  }
+  
+  .admin-tabs .btn-secondary:hover {
+    background: #e9ecef;
+    border-color: #dee2e6;
   }
   
   .admin-table {
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
   }
   
   .admin-table th {
     background: #f8f9fa;
     padding: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #e9ecef;
   }
   
   .admin-table td {
     padding: 1rem;
     vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .admin-table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .admin-table tbody tr:last-child td {
+    border-bottom: none;
   }
   
   .admin-table .btn {
@@ -71,11 +124,39 @@
   .loading-spinner {
     display: flex;
     justify-content: center;
-    padding: 2rem;
+    align-items: center;
+    padding: 3rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .loading-spinner .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.25rem;
+    color: #3498db;
   }
   
   .error-alert {
     margin-bottom: 2rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+  }
+  
+  .error-alert .btn-link {
+    color: inherit;
+    text-decoration: underline;
+    padding: 0.25rem 0.5rem;
+    margin: -0.25rem -0.5rem;
+    border-radius: 4px;
+  }
+  
+  .error-alert .btn-link:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
   
   @media (max-width: 768px) {

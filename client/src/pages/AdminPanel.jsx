@@ -15,36 +15,47 @@ const AdminPanel = () => {
   const [recipes, setRecipes] = useState([]);
   const [posts, setPosts] = useState([]);
 
-  // Check if user is admin
-  if (!user || user.role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
-
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
+        console.log('Fetching data for tab:', activeTab);
 
         switch (activeTab) {
           case 'dashboard':
+            console.log('Making request to admin/stats');
             const statsResponse = await api.get('admin/stats');
+            console.log('Stats response:', statsResponse.data);
             setStats(statsResponse.data);
             break;
           case 'users':
+            console.log('Making request to admin/users');
             const usersResponse = await api.get('admin/users');
+            console.log('Users response:', usersResponse.data);
             setUsers(usersResponse.data);
             break;
           case 'recipes':
+            console.log('Making request to admin/recipes');
             const recipesResponse = await api.get('admin/recipes');
+            console.log('Recipes response:', recipesResponse.data);
             setRecipes(recipesResponse.data);
             break;
           case 'posts':
+            console.log('Making request to admin/forum-posts');
             const postsResponse = await api.get('admin/forum-posts');
+            console.log('Posts response:', postsResponse.data);
             setPosts(postsResponse.data);
             break;
         }
       } catch (err) {
+        console.error('Error fetching data:', err);
+        console.error('Error details:', {
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          data: err.response?.data,
+          config: err.config
+        });
         setError(err.response?.data?.message || 'Failed to fetch data');
       } finally {
         setLoading(false);
@@ -130,8 +141,8 @@ const AdminPanel = () => {
               </tr>
             </thead>
             <tbody>
-              {stats?.recent.users.map(user => (
-                <tr key={user._id}>
+              {stats?.recent.users.map((user, index) => (
+                <tr key={`${user._id}-${index}`}>
                   <td>{user.username}</td>
                   <td>{user.email}</td>
                   <td>{new Date(user.createdAt).toLocaleDateString()}</td>
@@ -153,8 +164,8 @@ const AdminPanel = () => {
               </tr>
             </thead>
             <tbody>
-              {stats?.recent.recipes.map(recipe => (
-                <tr key={recipe._id}>
+              {stats?.recent.recipes.map((recipe, index) => (
+                <tr key={`${recipe._id}-${index}`}>
                   <td>{recipe.title}</td>
                   <td>{recipe.author.username}</td>
                   <td>{new Date(recipe.createdAt).toLocaleDateString()}</td>
@@ -178,8 +189,8 @@ const AdminPanel = () => {
         </tr>
       </thead>
       <tbody>
-        {users.map(user => (
-          <tr key={user._id}>
+        {users.map((user, index) => (
+          <tr key={`${user._id}-${index}`}>
             <td>{user.username}</td>
             <td>{user.email}</td>
             <td>
@@ -218,8 +229,8 @@ const AdminPanel = () => {
         </tr>
       </thead>
       <tbody>
-        {recipes.map(recipe => (
-          <tr key={recipe._id}>
+        {recipes.map((recipe, index) => (
+          <tr key={`${recipe._id}-${index}`}>
             <td>{recipe.title}</td>
             <td>{recipe.author.username}</td>
             <td>{new Date(recipe.createdAt).toLocaleDateString()}</td>
@@ -249,8 +260,8 @@ const AdminPanel = () => {
         </tr>
       </thead>
       <tbody>
-        {posts.map(post => (
-          <tr key={post._id}>
+        {posts.map((post, index) => (
+          <tr key={`${post._id}-${index}`}>
             <td>{post.title}</td>
             <td>{post.author.username}</td>
             <td>{new Date(post.createdAt).toLocaleDateString()}</td>
@@ -269,6 +280,11 @@ const AdminPanel = () => {
     </Table>
   );
 
+  // Check if user is admin
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <Container className="admin-panel">
       <h1>Admin Panel</h1>
@@ -276,6 +292,17 @@ const AdminPanel = () => {
       {error && (
         <Alert color="danger" className="error-alert">
           {error}
+          <Button
+            color="link"
+            className="ms-2"
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              fetchData();
+            }}
+          >
+            Retry
+          </Button>
         </Alert>
       )}
 

@@ -11,7 +11,7 @@ const protect = async (req, res, next) => {
     console.log('Received token:', idToken);
 
     try {
-      // Verify the ID token
+      // Verify the ID token and get custom claims
       const decodedToken = await admin.auth().verifyIdToken(idToken);
       console.log('Decoded token:', decodedToken);
 
@@ -26,10 +26,16 @@ const protect = async (req, res, next) => {
           uid: decodedToken.uid,
           email: decodedToken.email,
           username: decodedToken.email.split("@")[0],
+          role: decodedToken.admin === true ? 'admin' : 'user', // Set role based on Firebase custom claims
         });
 
         await user.save();
         console.log('New user created:', user);
+      } else if (decodedToken.admin === true && user.role !== 'admin') {
+        // Update user role if they have admin claims but not admin role
+        user.role = 'admin';
+        await user.save();
+        console.log('Updated user to admin:', user);
       }
 
       // Attach the user to the request object
