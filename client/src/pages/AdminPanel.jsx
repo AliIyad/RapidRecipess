@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Alert, Spinner } from 'reactstrap';
+import '../CSS/AdminPanel.css';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/authService';
 import { Navigate } from 'react-router-dom';
@@ -98,27 +99,27 @@ const AdminPanel = () => {
   };
 
   const renderDashboard = () => (
-    <Row>
+    <Row className="admin-stats">
       <Col md={4}>
-        <Card className="mb-4 p-3">
+        <Card className="stat-card">
           <h4>Users</h4>
           <h2>{stats?.counts.users || 0}</h2>
         </Card>
       </Col>
       <Col md={4}>
-        <Card className="mb-4 p-3">
+        <Card className="stat-card">
           <h4>Recipes</h4>
           <h2>{stats?.counts.recipes || 0}</h2>
         </Card>
       </Col>
       <Col md={4}>
-        <Card className="mb-4 p-3">
+        <Card className="stat-card">
           <h4>Forum Posts</h4>
           <h2>{stats?.counts.posts || 0}</h2>
         </Card>
       </Col>
       <Col md={6}>
-        <Card className="mb-4 p-3">
+        <Card className="stat-card">
           <h4>Recent Users</h4>
           <Table>
             <thead>
@@ -141,7 +142,7 @@ const AdminPanel = () => {
         </Card>
       </Col>
       <Col md={6}>
-        <Card className="mb-4 p-3">
+        <Card className="stat-card">
           <h4>Recent Recipes</h4>
           <Table>
             <thead>
@@ -167,7 +168,7 @@ const AdminPanel = () => {
   );
 
   const renderUsers = () => (
-    <Table>
+    <Table className="admin-table">
       <thead>
         <tr>
           <th>Username</th>
@@ -185,7 +186,7 @@ const AdminPanel = () => {
               <select 
                 value={user.role} 
                 onChange={(e) => handleUpdateRole(user._id, e.target.value)}
-                className="form-select"
+                className="form-select admin-form-select"
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
@@ -207,7 +208,7 @@ const AdminPanel = () => {
   );
 
   const renderRecipes = () => (
-    <Table>
+    <Table className="admin-table">
       <thead>
         <tr>
           <th>Title</th>
@@ -238,7 +239,7 @@ const AdminPanel = () => {
   );
 
   const renderPosts = () => (
-    <Table>
+    <Table className="admin-table">
       <thead>
         <tr>
           <th>Title</th>
@@ -269,16 +270,16 @@ const AdminPanel = () => {
   );
 
   return (
-    <Container className="py-4">
-      <h1 className="mb-4">Admin Panel</h1>
+    <Container className="admin-panel">
+      <h1>Admin Panel</h1>
       
       {error && (
-        <Alert color="danger" className="mb-4">
+        <Alert color="danger" className="error-alert">
           {error}
         </Alert>
       )}
 
-      <div className="mb-4">
+      <div className="admin-tabs">
         <Button
           color={activeTab === 'dashboard' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('dashboard')}
@@ -309,7 +310,7 @@ const AdminPanel = () => {
       </div>
 
       {loading ? (
-        <div className="text-center">
+        <div className="loading-spinner">
           <Spinner color="primary" />
         </div>
       ) : (

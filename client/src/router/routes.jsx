@@ -1,5 +1,6 @@
 import React from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Home from "../pages/HomePage";
 import About from "../pages/AboutPage";
 import Contact from "../pages/ContactPage";
@@ -12,9 +13,24 @@ import Settings from "../pages/SettingsPage";
 import Community from "../pages/CommunityPage";
 import RecipeSearch from "../pages/SearchPage";
 import StarterPage from "../pages/StarterPage";
+import AdminPanel from "../pages/AdminPanel";
 
 import Layout from "../components/Layout";
 import withAuth from "../services/withAuth";
+
+// Higher-order component for admin route protection
+const withAdminAuth = (Component) => {
+  const AdminProtected = withAuth(Component);
+  return (props) => {
+    const { user } = useAuth();
+    if (user?.role !== 'admin') {
+      return <Navigate to="/" replace />;
+    }
+    return <AdminProtected {...props} />;
+  };
+};
+
+const ProtectedAdminPanel = withAdminAuth(AdminPanel);
 
 const ProtectedHome = withAuth(Home);
 const ProtectedServices = withAuth(Services);
@@ -40,6 +56,7 @@ const Router = () => {
           <Route path='/settings' element={<ProtectedSettings />} />
           <Route path='/search' element={<RecipeSearch />} />
           <Route path='/start' element={<StarterPage />} />
+          <Route path='/admin' element={<ProtectedAdminPanel />} />
           <Route path='*' element={<PageNotFound />} />
         </Routes>
       </Layout>

@@ -17,10 +17,13 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const idToken = await getIdToken(user);
+        // Get the ID token result to check for custom claims
+        const tokenResult = await user.getIdTokenResult();
         setUser({
           id: user.uid,
           email: user.email,
           username: user.displayName,
+          role: tokenResult.claims.admin ? 'admin' : 'user'
         });
         setToken(idToken);
       } else {
