@@ -167,7 +167,7 @@ const AdminPanel = () => {
               {stats?.recent.recipes.map((recipe, index) => (
                 <tr key={`${recipe._id}-${index}`}>
                   <td>{recipe.title}</td>
-                  <td>{recipe.author.username}</td>
+                  <td>{recipe.user?.username || 'Unknown'}</td>
                   <td>{new Date(recipe.createdAt).toLocaleDateString()}</td>
                 </tr>
               ))}
@@ -232,7 +232,7 @@ const AdminPanel = () => {
         {recipes.map((recipe, index) => (
           <tr key={`${recipe._id}-${index}`}>
             <td>{recipe.title}</td>
-            <td>{recipe.author.username}</td>
+            <td>{recipe.user?.username || 'Unknown'}</td>
             <td>{new Date(recipe.createdAt).toLocaleDateString()}</td>
             <td>
               <Button 
@@ -263,7 +263,7 @@ const AdminPanel = () => {
         {posts.map((post, index) => (
           <tr key={`${post._id}-${index}`}>
             <td>{post.title}</td>
-            <td>{post.author.username}</td>
+            <td>{post.author?.username || 'Unknown'}</td>
             <td>{new Date(post.createdAt).toLocaleDateString()}</td>
             <td>
               <Button 

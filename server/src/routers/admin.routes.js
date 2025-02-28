@@ -56,7 +56,7 @@ router.delete('/users/:id', protect, isAdmin, async (req, res) => {
 // Get all recipes
 router.get('/recipes', protect, isAdmin, async (req, res) => {
   try {
-    const recipes = await Recipe.find().populate('author', 'username email');
+    const recipes = await Recipe.find().populate('user', 'username email');
     res.json(recipes);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -118,7 +118,7 @@ router.get('/stats', protect, isAdmin, async (req, res) => {
     const recentRecipes = await Recipe.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .populate('author', 'username');
+      .populate('user', 'username');
 
     res.json({
       counts: {
