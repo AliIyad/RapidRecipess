@@ -1,34 +1,30 @@
 import React from "react";
+import { Button, Container, Row, Col } from "reactstrap";
 import "../CSS/LandingPage.css";
-
 import Features from "../components/Features";
 import SocialProof from "../components/SocialProof";
-
 import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
 
   return (
     <div className='landing-page'>
       <section className='hero-section'>
-        <div className='hero-content'>
-          <h1>Rapid Recipes</h1>
+        <Container className='text-center hero-content'>
+          <h1 className='hero-title'>Rapid Recipes</h1>
           <p className='catchphrase'>
             Cook, Share, Connect.
             <br />A New Way to Experience Food Together.
           </p>
-          <button
+          <Button
+            color='primary'
             className='cta-btn'
-            type='button'
-            onClick={() => {
-              Navigate("/home");
-            }}>
+            onClick={() => navigate("/home")}>
             Get Started
-          </button>
-        </div>
+          </Button>
+        </Container>
       </section>
-
       <SocialProof />
       <Features />
     </div>

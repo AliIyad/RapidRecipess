@@ -1,85 +1,339 @@
-.profile-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  text-align: center;
-  background-color: #f8f8f8;
-  border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+:root {
+  /* Color Palette */
+  --color-primary: #4b5e2d;
+  --color-primary-light: #6b8547;
+  --color-secondary: #ff7f41;
+  --color-background: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-text: #2d3748;
+  --color-text-light: #718096;
+  --color-success: #68d391;
+  --color-warning: #f6e05e;
+  --color-error: #fc8181;
+  --color-border: #e2e8f0;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #4b5e2d 0%, #6b8547 100%);
+  --gradient-overlay: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* Main Layout */
+.profile-page {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* Profile Header */
 .profile-header {
-  background-color: #4b5e2dc4;
-  padding: 3.75rem;
-  border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  position: relative;
+  background: var(--gradient-primary);
+  border-radius: 20px;
+  padding: 6rem 2rem 3rem;
+  margin-bottom: 2rem;
   color: white;
-  margin-bottom: 40px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
 }
 
 .profile-header h1 {
-  font-size: 4rem;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
-
-.profile-header p {
-  font-size: 1.5rem;
-  font-weight: lighter;
-  margin-bottom: 20px;
-}
-
-.profile-section {
-  background-color: #ffffff;
-  padding: 40px 20px;
-  border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 40px;
-}
-
-.profile-section h2 {
   font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: #4b5e2dc4;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
 }
 
-.profile-section ul {
-  list-style-type: none;
-  padding: 0;
+.user-email {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 1rem;
 }
 
-.profile-section ul li {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
-  color: #333;
+/* Profile Picture */
+.profile-picture-container {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: -90px auto 2rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  background: var(--color-background);
 }
 
-.profile-section p {
-  font-size: 1.2rem;
-  color: #333;
-  margin-bottom: 10px;
+.profile-picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.3s ease;
 }
 
-.profile-section .stats {
+.default-avatar {
+  width: 100%;
+  height: 100%;
   display: flex;
-  justify-content: space-around;
-  margin-top: 20px;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-primary);
+  color: white;
+  font-size: 3rem;
+  font-weight: 600;
 }
 
-.profile-section .stats p {
+.update-picture-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.profile-picture-container:hover .update-picture-overlay {
+  opacity: 1;
+}
+
+.profile-picture-input {
+  display: none;
+}
+
+.upload-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-secondary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+/* Verification Badge */
+.verification-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  backdrop-filter: blur(4px);
+}
+
+/* Profile Sections Grid */
+.profile-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Section Styling */
+.profile-section {
+  background: var(--color-surface);
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.3s ease;
+}
+
+.profile-section:hover {
+  transform: translateY(-5px);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Notification Preferences */
+.notification-preferences {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.preference-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--color-background);
+  border-radius: 10px;
+}
+
+.preference-value {
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.875rem;
+}
+
+.preference-value.enabled {
+  background: var(--color-success);
+  color: white;
+}
+
+.preference-value.disabled {
+  background: var(--color-text-light);
+  color: white;
+}
+
+/* Tag Cloud */
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tag {
+  background: var(--color-background);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+}
+
+/* Recipe List */
+.recipe-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.recipe-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--color-background);
+  border-radius: 10px;
+  color: var(--color-text);
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.recipe-item:hover {
+  transform: translateX(5px);
+  background: var(--color-primary-light);
+  color: white;
+}
+
+/* Stats Cards */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--color-background);
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
   font-size: 1.5rem;
-  font-weight: bold;
-  color: #4b5e2dc4;
+  font-weight: 700;
+  color: var(--color-primary);
 }
 
-.profile-section .account-info {
-  text-align: left;
-  margin-top: 20px;
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--color-text-light);
 }
 
-.profile-section .account-info p {
-  font-size: 1.2rem;
-  color: #333;
-  margin-bottom: 10px;
+/* Section Links */
+.section-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  margin-top: 1rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.section-link:hover {
+  color: var(--color-secondary);
+}
+
+/* Empty States */
+.empty-state {
+  color: var(--color-text-light);
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Error Message */
+.error-message {
+  background: var(--color-error);
+  color: white;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* Loading Screen */
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  font-size: 1.25rem;
+  color: var(--color-text-light);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-header {
+    padding: 4rem 1rem 2rem;
+  }
+
+  .profile-picture-container {
+    width: 140px;
+    height: 140px;
+    margin: -70px auto 1.5rem;
+  }
+
+  .profile-sections-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .profile-section,
+  .profile-picture-container,
+  .recipe-item {
+    transition: none;
+  }
 }

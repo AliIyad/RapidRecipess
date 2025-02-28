@@ -1,4 +1,5 @@
 const userService = require("../services/user.services");
+const { uploadImageToImgBB } = require("../services/imageUploadService");
 
 const getAllUsers = async (req, res) => {
   try {
@@ -29,7 +30,16 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const user = await userService.updateUser(req.params.id, req.body);
+    const { id } = req.params;
+    const updateData = req.body;
+
+    let imageUrl = null;
+    if (req.file) {
+      imageUrl = await uploadImageToImgBB(req.file.buffer);
+      updateData.profilePicture = imageUrl;
+    }
+
+    const user = await userService.updateUser(id, updateData);
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });

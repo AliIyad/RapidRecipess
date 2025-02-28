@@ -7,7 +7,6 @@ const Recipe = require("../models/recipe.model");
 const recipeService = require("../services/recipe.services");
 
 const mongoose = require("mongoose");
-const { route } = require("./user.routes");
 
 router.get("/recommended", async (req, res) => {
   try {

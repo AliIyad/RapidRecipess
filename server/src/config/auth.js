@@ -133,6 +133,7 @@ router.get("/profile", protect, async (req, res) => {
         id: user._id,
         email: user.email,
         username: user.username,
+        profilePicture: user.profilePicture,
         preferredTags: user.preferredTags,
         notificationPreferences: user.notificationPreferences,
         createdAt: user.createdAt,

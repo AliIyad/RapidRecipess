@@ -1,48 +1,94 @@
+:root {
+  /* Color Palette */
+  --color-primary: #ff7f41;
+  --color-primary-light: #ff9b67;
+  --color-secondary: #4b5e2d;
+  --color-background: #fff9ee;
+  --color-surface: #ffffff;
+  --color-text: #4a3f35;
+  --color-text-light: #776b63;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-primary-light)
+  );
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(255, 127, 65, 0.1);
+  --shadow-md: 0 4px 8px rgba(255, 127, 65, 0.15);
+  --shadow-lg: 0 8px 16px rgba(255, 127, 65, 0.2);
+}
+
 .not-found-container {
   max-width: 800px;
-  margin: 0 auto;
-  padding: 40px;
-  background-color: #fff;
-  border-radius: 15px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  margin: 2rem auto;
+  padding: 2rem;
+  background: var(--color-surface);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
   text-align: center;
 }
 
 .not-found-header {
-  background-color: #e04e31da;
+  background: var(--gradient-primary);
   color: white;
-  padding: 60px 20px;
+  padding: 4rem 2rem;
   border-radius: 15px;
-  margin-bottom: 30px;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-lg);
 }
 
 .not-found-header h1 {
-  font-size: 4rem;
-  font-weight: bold;
+  font-size: clamp(3rem, 8vw, 4rem);
+  font-weight: 700;
+  margin-bottom: 1rem;
 }
 
 .not-found-header h2 {
-  font-size: 2.5rem;
-  margin-top: 10px;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  opacity: 0.9;
 }
 
 .not-found-text {
   font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 30px;
+  color: var(--color-text-light);
+  margin-bottom: 2rem;
+  line-height: 1.6;
 }
 
 .not-found-button {
-  padding: 12px 30px;
-  background-color: #e04e31da;
+  padding: 1rem 2rem;
+  background: var(--gradient-primary);
   color: white;
   border: none;
   border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 1.2rem;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .not-found-button:hover {
-  background-color: #4b5e2d;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  background: var(--color-secondary);
+}
+
+@media (max-width: 768px) {
+  .not-found-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .not-found-header {
+    padding: 3rem 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .not-found-button {
+    transition: none;
+  }
 }

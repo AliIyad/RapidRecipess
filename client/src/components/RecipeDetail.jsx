@@ -145,11 +145,13 @@ const RecipeDetail = ({ id }) => {
   return (
     <Container className='recipe-detail'>
       <Card className='recipe-card'>
-        <img
-          src={recipe.imageUrl || "https://via.placeholder.com/150"}
-          alt={recipe.title}
-          className='recipe-image'
-        />
+        <div className='recipe-image-container'>
+          <img
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            className='recipe-image'
+          />
+        </div>
         <CardBody className='recipe-card-body'>
           <CardTitle tag='h1' className='recipe-title'>
             {recipe.title}

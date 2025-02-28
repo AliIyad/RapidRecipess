@@ -19,17 +19,12 @@ const Home = () => {
           <h1>Featured Recipes</h1>
           <FeaturedRecipesCarousel recipes={recipes} />
         </div>
-
-        <div className='home-recipe-form'>
-          <h1>Share Your Own Recipe</h1>
-          <RecipeForm setRecipes={setRecipes} />
-        </div>
-
         <div className='home-recipe-dashboard'>
           <h1>Your Dashboard Feed</h1>
           <RecipeDashboard />
         </div>
       </div>
+      <RecipeForm setRecipes={setRecipes} />
     </>
   );
 };

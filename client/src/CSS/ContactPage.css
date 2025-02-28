@@ -1,124 +1,185 @@
-/* General container for the contact page */
-.contact-page {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 30px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+:root {
+  /* Color Palette */
+  --color-primary: #ff7f41;
+  --color-primary-light: #ff9b67;
+  --color-secondary: #7fb069;
+  --color-background: #fff9ee;
+  --color-surface: #ffffff;
+  --color-text: #4a3f35;
+  --color-text-light: #776b63;
+  --color-success: #68d391;
+  --color-error: #fc8181;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-primary-light)
+  );
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(255, 127, 65, 0.1);
+  --shadow-md: 0 4px 8px rgba(255, 127, 65, 0.15);
+  --shadow-lg: 0 8px 16px rgba(255, 127, 65, 0.2);
 }
 
-/* Contact header styling */
+/* Page Layout */
+.contact-page {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* Header Section */
 .contact-header {
-  background-color: #4b5e2dc4;
+  position: relative;
+  background: var(--gradient-primary);
+  border-radius: 20px;
+  padding: 4rem 2rem;
+  margin-bottom: 2rem;
   color: white;
-  padding: 60px 20px;
-  border-radius: 15px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
 }
 
 .contact-header h1 {
-  font-size: 4rem;
-  font-weight: bold;
-  text-align: center;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  margin-bottom: 1rem;
 }
 
-/* Contact form container styling */
+/* Form Section */
 .contact-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 40px 20px;
-  background-color: white;
-  border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: var(--color-surface);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  display: grid;
+  gap: 1.5rem;
 }
 
-/* Contact form heading */
 .contact-form h2 {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
-  text-align: center;
+  font-size: 2rem;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+  position: relative;
+  display: inline-block;
 }
 
-/* Input and textarea styling */
+.contact-form h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.5rem;
+  width: 100%;
+  height: 3px;
+  background: var(--gradient-primary);
+  border-radius: 3px;
+}
+
+/* Form Elements */
+.form-group {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.contact-form label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
 .contact-form input,
 .contact-form textarea {
   width: 100%;
-  padding: 12px;
-  margin: 5px 0;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-background);
+  color: var(--color-text);
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-sizing: border-box;
-  transition: border 0.3s ease-in-out;
-  background-color: #f8f8f8;
-  color: #000;
+  transition: all 0.3s ease;
 }
 
 .contact-form input:focus,
 .contact-form textarea:focus {
   outline: none;
-  border-color: #e04e31;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(255, 127, 65, 0.1);
 }
 
-/* Submit button styling */
+.contact-form textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+/* Submit Button */
 .contact-form button {
-  padding: 12px 30px;
-  background-color: #e04e31;
+  width: 100%;
+  padding: 1rem;
+  background: var(--gradient-primary);
   color: white;
   border: none;
-  border-radius: 25px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 1.2rem;
-  transition: background-color 0.3s ease;
-  margin-top: 15px;
-  text-align: center;
+  transition: all 0.3s ease;
 }
 
 .contact-form button:hover {
-  background-color: #d73c2f;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
-/* For better accessibility */
-.contact-form label {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-/* Styling for alerts or feedback */
-.contact-form .alert {
+/* Alert Messages */
+.alert {
+  padding: 1rem;
+  border-radius: 10px;
   font-size: 1rem;
-  padding: 12px;
-  margin-top: 20px;
-  border-radius: 5px;
+  animation: slideIn 0.3s ease-out;
 }
 
 .alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  border-color: #c3e6cb;
+  background: var(--color-success);
+  color: white;
 }
 
 .alert-danger {
-  background-color: #f8d7da;
-  color: #721c24;
-  border-color: #f5c6cb;
+  background: var(--color-error);
+  color: white;
 }
 
-/* For expandable input field styling (like for the search bar) */
-.expandable-input {
-  width: 100%;
-  padding: 15px;
-  font-size: 1.2rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  transition: width 0.3s ease-in-out;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.expandable-input:focus {
-  width: 100%;
-  outline: none;
-  border-color: #d73c2f;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .contact-page {
+    margin: 1rem;
+  }
+
+  .contact-header {
+    padding: 3rem 1rem;
+  }
+
+  .contact-form {
+    padding: 1.5rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
