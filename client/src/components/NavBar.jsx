@@ -99,6 +99,11 @@ function Navi(args) {
                 <DropdownItem tag={Link} to='/settings'>
                   Settings
                 </DropdownItem>
+                {user?.role === "admin" && (
+                  <DropdownItem tag={Link} to='/admin'>
+                    Admin Panel
+                  </DropdownItem>
+                )}
                 <DropdownItem onClick={handleLogout}>Logout</DropdownItem>
                 <DropdownItem divider />
               </DropdownMenu>

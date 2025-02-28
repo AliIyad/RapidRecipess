@@ -1,11 +1,41 @@
-// Firebase Admin Configuration
 const admin = require("firebase-admin");
+const dotenv = require("dotenv");
 
-const service_Account = {
+// Ensure environment variables are loaded
+dotenv.config();
+
+// Validate required environment variables
+const requiredEnvVars = [
+  "TYPE",
+  "PROJECT_ID",
+  "PRIVATE_KEY_ID",
+  "PRIVATE_KEY",
+  "CLIENT_EMAIL",
+  "CLIENT_ID",
+  "AUTH_URI",
+  "TOKEN_URI",
+  "AUTH_PROVIDER_X509_CERT_URL",
+  "CLIENT_X509_CERT_URL",
+];
+
+const missingEnvVars = requiredEnvVars.filter(
+  (varName) => !process.env[varName]
+);
+
+if (missingEnvVars.length > 0) {
+  throw new Error(
+    `Missing required environment variables: ${missingEnvVars.join(", ")}`
+  );
+}
+
+// Create service account configuration
+const serviceAccount = {
   type: process.env.TYPE,
   project_id: process.env.PROJECT_ID,
   private_key_id: process.env.PRIVATE_KEY_ID,
-  private_key: process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
+  private_key: process.env.PRIVATE_KEY
+    ? process.env.PRIVATE_KEY.replace(/\\n/g, "\n")
+    : "",
   client_email: process.env.CLIENT_EMAIL,
   client_id: process.env.CLIENT_ID,
   auth_uri: process.env.AUTH_URI,
@@ -14,8 +44,15 @@ const service_Account = {
   client_x509_cert_url: process.env.CLIENT_X509_CERT_URL,
 };
 
-admin.initializeApp({
-  credential: admin.credential.cert(service_Account),
-});
+// Initialize Firebase Admin
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+  console.log("Firebase Admin initialized successfully");
+} catch (error) {
+  console.error("Error initializing Firebase Admin:", error);
+  throw error;
+}
 
 module.exports = admin;

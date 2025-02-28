@@ -13,16 +13,16 @@
 /* Floating Action Button */
 .recipe-bubble-container {
   position: fixed;
-  right: 6rem;
-  bottom: 8rem;
+  right: 4rem;
+  bottom: 6rem;
   z-index: 1000;
 }
 
 .recipe-bubble {
-  width: 90px;
-  height: 90px;
+  width: 140px;
+  height: 70px;
   background: var(--primary-color);
-  border-radius: 25%;
+  border-radius: 12%;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -10,6 +10,8 @@ const UserRouter = require("./src/routers/user.routes");
 const CommentRouter = require("./src/routers/comment.routes");
 const InteractionRouter = require("./src/routers/interaction.routes");
 const TagRouter = require("./src/routers/tags.routes");
+const ForumRouter = require("./src/routers/forumPost.routes");
+const AdminRouter = require("./src/routers/admin.routes");
 const { protect } = require("./src/utils/protected");
 
 // Load environment variables
@@ -58,6 +60,10 @@ app.get("/protected", protect, (req, res) => {
   });
 });
 app.use("/tags", TagRouter);
+
+app.use("/admin", AdminRouter);
+
+app.use("/forum", ForumRouter);
 
 // Start server
 const PORT = process.env.PORT || 6969;
