@@ -22,8 +22,19 @@ api.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
   
   if (user) {
-    const token = await user.getIdToken();
-    config.headers.Authorization = `Bearer ${token}`;
+    try {
+      // Force token refresh to ensure latest claims
+      const token = await user.getIdToken(true);
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log('Token refreshed and added to request headers');
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      // Still try with the current token if refresh fails
+      const token = await user.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } else {
+    console.log('No user found for token refresh');
   }
 
   // Don't set Content-Type for FormData

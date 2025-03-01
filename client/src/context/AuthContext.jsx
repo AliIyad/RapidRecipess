@@ -15,22 +15,32 @@ export const AuthProvider = ({ children }) => {
 
     // Listen for auth changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const idToken = await getIdToken(user);
-        // Get the ID token result to check for custom claims
-        const tokenResult = await user.getIdTokenResult();
-        setUser({
-          id: user.uid,
-          email: user.email,
-          username: user.displayName,
-          role: tokenResult.claims.admin ? 'admin' : 'user'
-        });
-        setToken(idToken);
-      } else {
+      try {
+        if (user) {
+          // Force token refresh to ensure latest claims
+          const idToken = await getIdToken(user, true);
+          // Get the ID token result to check for custom claims
+          const tokenResult = await user.getIdTokenResult(true);
+          console.log('Auth state changed - Token refreshed, claims:', tokenResult.claims);
+          
+          setUser({
+            id: user.uid,
+            email: user.email,
+            username: user.displayName,
+            role: tokenResult.claims.admin ? 'admin' : 'user'
+          });
+          setToken(idToken);
+        } else {
+          setUser(null);
+          setToken(null);
+        }
+      } catch (error) {
+        console.error('Error refreshing token in auth state change:', error);
         setUser(null);
         setToken(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe(); // Cleanup listener
@@ -41,7 +51,7 @@ export const AuthProvider = ({ children }) => {
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
-      const idToken = await getIdToken(user);
+      const idToken = await getIdToken(user, true); // Force token refresh here too
       setToken(idToken);
     }
     return response;
@@ -52,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
-      const idToken = await getIdToken(user);
+      const idToken = await getIdToken(user, true); // Force token refresh here too
       setToken(idToken);
     }
     return response;

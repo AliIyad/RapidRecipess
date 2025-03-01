@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Table, Button, Alert, Spinner } from 'reactstrap';
 import '../CSS/AdminPanel.css';
 import { useAuth } from '../context/AuthContext';
@@ -15,55 +15,64 @@ const AdminPanel = () => {
   const [recipes, setRecipes] = useState([]);
   const [posts, setPosts] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        console.log('Fetching data for tab:', activeTab);
+  // Define fetchData outside useEffect so it can be called from error handler
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Fetching data for tab:', activeTab);
 
-        switch (activeTab) {
-          case 'dashboard':
-            console.log('Making request to admin/stats');
-            const statsResponse = await api.get('admin/stats');
-            console.log('Stats response:', statsResponse.data);
-            setStats(statsResponse.data);
-            break;
-          case 'users':
-            console.log('Making request to admin/users');
-            const usersResponse = await api.get('admin/users');
-            console.log('Users response:', usersResponse.data);
-            setUsers(usersResponse.data);
-            break;
-          case 'recipes':
-            console.log('Making request to admin/recipes');
-            const recipesResponse = await api.get('admin/recipes');
-            console.log('Recipes response:', recipesResponse.data);
-            setRecipes(recipesResponse.data);
-            break;
-          case 'posts':
-            console.log('Making request to admin/forum-posts');
-            const postsResponse = await api.get('admin/forum-posts');
-            console.log('Posts response:', postsResponse.data);
-            setPosts(postsResponse.data);
-            break;
-        }
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        console.error('Error details:', {
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          config: err.config
-        });
-        setError(err.response?.data?.message || 'Failed to fetch data');
-      } finally {
-        setLoading(false);
+      switch (activeTab) {
+        case 'dashboard':
+          console.log('Making request to admin/stats');
+          const statsResponse = await api.get('admin/stats');
+          console.log('Stats response:', statsResponse.data);
+          setStats(statsResponse.data);
+          break;
+        case 'users':
+          console.log('Making request to admin/users');
+          const usersResponse = await api.get('admin/users');
+          console.log('Users response:', usersResponse.data);
+          setUsers(usersResponse.data);
+          break;
+        case 'recipes':
+          console.log('Making request to admin/recipes');
+          const recipesResponse = await api.get('admin/recipes');
+          console.log('Recipes response:', recipesResponse.data);
+          setRecipes(recipesResponse.data);
+          break;
+        case 'posts':
+          console.log('Making request to admin/forum-posts');
+          const postsResponse = await api.get('admin/forum-posts');
+          console.log('Posts response:', postsResponse.data);
+          setPosts(postsResponse.data);
+          break;
       }
-    };
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      console.error('Error details:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        config: err.config
+      });
 
-    fetchData();
+      // Enhanced error messaging based on status code
+      if (err.response?.status === 401) {
+        setError('Your session has expired or is invalid. Please log out and log in again to refresh your credentials.');
+      } else if (err.response?.status === 403) {
+        setError('You do not have admin privileges to access this section.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to fetch data. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [activeTab]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleDeleteUser = async (userId) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
@@ -72,7 +81,11 @@ const AdminPanel = () => {
       await api.delete(`admin/users/${userId}`);
       setUsers(users.filter(user => user._id !== userId));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete user');
+      if (err.response?.status === 401) {
+        setError('Your session has expired. Please log out and log in again.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to delete user');
+      }
     }
   };
 
@@ -83,7 +96,11 @@ const AdminPanel = () => {
         user._id === userId ? response.data : user
       ));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update user role');
+      if (err.response?.status === 401) {
+        setError('Your session has expired. Please log out and log in again.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to update user role');
+      }
     }
   };
 
@@ -94,7 +111,11 @@ const AdminPanel = () => {
       await api.delete(`admin/recipes/${recipeId}`);
       setRecipes(recipes.filter(recipe => recipe._id !== recipeId));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete recipe');
+      if (err.response?.status === 401) {
+        setError('Your session has expired. Please log out and log in again.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to delete recipe');
+      }
     }
   };
 
@@ -105,7 +126,11 @@ const AdminPanel = () => {
       await api.delete(`admin/forum-posts/${postId}`);
       setPosts(posts.filter(post => post._id !== postId));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete post');
+      if (err.response?.status === 401) {
+        setError('Your session has expired. Please log out and log in again.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to delete post');
+      }
     }
   };
 
@@ -141,7 +166,7 @@ const AdminPanel = () => {
               </tr>
             </thead>
             <tbody>
-              {stats?.recent.users.map((user, index) => (
+              {stats?.recent?.users?.map((user, index) => (
                 <tr key={`${user._id}-${index}`}>
                   <td>{user.username}</td>
                   <td>{user.email}</td>
@@ -164,7 +189,7 @@ const AdminPanel = () => {
               </tr>
             </thead>
             <tbody>
-              {stats?.recent.recipes.map((recipe, index) => (
+              {stats?.recent?.recipes?.map((recipe, index) => (
                 <tr key={`${recipe._id}-${index}`}>
                   <td>{recipe.title}</td>
                   <td>{recipe.user?.username || 'Unknown'}</td>
@@ -297,8 +322,7 @@ const AdminPanel = () => {
             className="ms-2"
             onClick={() => {
               setError(null);
-              setLoading(true);
-              fetchData();
+              fetchData(); // Use the callback directly
             }}
           >
             Retry
