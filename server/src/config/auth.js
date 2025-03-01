@@ -1,9 +1,8 @@
-// Express Router Setup
 const express = require("express");
 const router = express.Router();
-const admin = require("../config/admin");
+const admin = require("./firebase-admin");
 const User = require("../models/user.model");
-const { protect } = require("../utils/protected");
+const { protect } = require("../utils/protected_new");
 
 const auth = admin.auth();
 
@@ -11,6 +10,19 @@ const auth = admin.auth();
 router.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
+
+    // Check if user already exists in Firebase
+    try {
+      const existingUser = await auth.getUserByEmail(email);
+      return res.status(400).json({
+        type: "error",
+        message: "Email already registered",
+      });
+    } catch (error) {
+      if (error.code !== 'auth/user-not-found') {
+        throw error;
+      }
+    }
 
     // Create user in Firebase Authentication
     const userRecord = await auth.createUser({
@@ -24,6 +36,7 @@ router.post("/register", async (req, res) => {
       uid: userRecord.uid,
       username,
       email,
+      role: 'user',
     });
 
     await newUser.save();
@@ -35,12 +48,14 @@ router.post("/register", async (req, res) => {
         id: newUser._id,
         email: newUser.email,
         username: newUser.username,
+        role: newUser.role,
       },
     });
   } catch (error) {
+    console.error("Registration error:", error);
     res.status(500).json({
       type: "error",
-      message: "Error creating user! 🤯",
+      message: "Error creating user",
       error: error.message,
     });
   }
@@ -51,6 +66,13 @@ router.post("/login", async (req, res) => {
   try {
     const { idToken } = req.body;
 
+    if (!idToken) {
+      return res.status(400).json({
+        type: "error",
+        message: "No token provided",
+      });
+    }
+
     // Verify the ID token
     const decodedToken = await auth.verifyIdToken(idToken);
 
@@ -58,9 +80,17 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ uid: decodedToken.uid });
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found!", type: "error" });
+      return res.status(404).json({ 
+        message: "User not found in database", 
+        type: "error" 
+      });
+    }
+
+    // Update user's role if Firebase claims have changed
+    if ((decodedToken.admin && user.role !== 'admin') || 
+        (!decodedToken.admin && user.role === 'admin')) {
+      user.role = decodedToken.admin ? 'admin' : 'user';
+      await user.save();
     }
 
     res.status(200).json({
@@ -70,12 +100,14 @@ router.post("/login", async (req, res) => {
         id: user._id,
         email: user.email,
         username: user.username,
+        role: user.role,
       },
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Login error:", error);
+    res.status(401).json({
       type: "error",
-      message: "Error logging in! 🤯",
+      message: "Invalid or expired token",
       error: error.message,
     });
   }
@@ -85,8 +117,15 @@ router.post("/login", async (req, res) => {
 router.post("/logout", async (req, res) => {
   try {
     const { idToken } = req.body;
-    const decodedToken = await auth.verifyIdToken(idToken);
+    
+    if (!idToken) {
+      return res.status(400).json({
+        type: "error",
+        message: "No token provided",
+      });
+    }
 
+    const decodedToken = await auth.verifyIdToken(idToken);
     await auth.revokeRefreshTokens(decodedToken.uid);
 
     res.status(200).json({
@@ -94,61 +133,85 @@ router.post("/logout", async (req, res) => {
       type: "success",
     });
   } catch (error) {
+    console.error("Logout error:", error);
     res.status(500).json({
       type: "error",
-      message: "Error logging out",
+      message: "Error during logout",
       error: error.message,
     });
   }
 });
 
-// Protected Route
-router.get("/protected", protect, async (req, res) => {
-  res.status(200).json({
-    message: "You're logged in!",
-    type: "success",
-    user: {
-      id: req.user._id,
-      email: req.user.email,
-      username: req.user.username,
-    },
-  });
-});
-
+// Get current user's profile
 router.get("/profile", protect, async (req, res) => {
   try {
-    const userId = req.user._id;
-    const user = await User.findById(userId).select("-password");
+    const user = await User.findById(req.user._id)
+      .select("-password")
+      .lean();
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found!", type: "error" });
+      return res.status(404).json({ 
+        message: "User not found", 
+        type: "error" 
+      });
     }
 
     res.status(200).json({
-      message: "Profile fetched successfully!",
+      type: "success",
+      user: {
+        ...user,
+        id: user._id,
+      },
+    });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({
+      type: "error",
+      message: "Error fetching profile",
+      error: error.message,
+    });
+  }
+});
+
+// Update user profile
+router.put("/profile", protect, async (req, res) => {
+  try {
+    const updates = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ 
+        message: "User not found", 
+        type: "error" 
+      });
+    }
+
+    // Don't allow role updates through this endpoint
+    delete updates.role;
+    
+    Object.keys(updates).forEach(key => {
+      user[key] = updates[key];
+    });
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Profile updated successfully",
       type: "success",
       user: {
         id: user._id,
         email: user.email,
         username: user.username,
-        profilePicture: user.profilePicture,
+        role: user.role,
         preferredTags: user.preferredTags,
-        notificationPreferences: user.notificationPreferences,
-        createdAt: user.createdAt,
-        recipes: user.recipes,
-        comments: user.comments,
-        followers: user.followers,
-        friends: user.friends,
-        notifications: user.notifications,
-        verified: user.verified,
+        profilePicture: user.profilePicture,
       },
     });
   } catch (error) {
+    console.error("Profile update error:", error);
     res.status(500).json({
       type: "error",
-      message: "Error fetching profile!",
+      message: "Error updating profile",
       error: error.message,
     });
   }
