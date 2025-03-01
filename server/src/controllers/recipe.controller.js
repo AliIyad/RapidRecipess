@@ -17,6 +17,8 @@ const createRecipe = async (req, res) => {
   try {
     const { title, ingredients, steps, prepTime, cookTime, difficulty, tags } =
       req.body;
+    const { title, ingredients, steps, prepTime, cookTime, difficulty, tags } =
+      req.body;
     const user = req.user;
 
     let imageUrl = null;
@@ -27,6 +29,11 @@ const createRecipe = async (req, res) => {
     // Handle tags
     const tagIds = [];
     if (tags) {
+      const tagNames = tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag !== "");
+
       const tagNames = tags
         .split(",")
         .map((tag) => tag.trim())
@@ -45,6 +52,13 @@ const createRecipe = async (req, res) => {
     // Create a new recipe object with proper tag references
     const newRecipe = {
       title,
+      ingredients: ingredients
+        .split(",")
+        .map((ingredient) => ingredient.trim()),
+      steps: steps
+        .split("\n")
+        .map((step) => step.trim())
+        .filter((step) => step !== ""),
       ingredients: ingredients
         .split(",")
         .map((ingredient) => ingredient.trim()),
@@ -81,6 +95,8 @@ const updateRecipe = async (req, res) => {
   try {
     const { title, ingredients, steps, prepTime, cookTime, difficulty, tags } =
       req.body;
+    const { title, ingredients, steps, prepTime, cookTime, difficulty, tags } =
+      req.body;
 
     let imageUrl = null;
     if (req.file) {
@@ -90,6 +106,11 @@ const updateRecipe = async (req, res) => {
     // Handle tags
     const tagIds = [];
     if (tags) {
+      const tagNames = tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag !== "");
+
       const tagNames = tags
         .split(",")
         .map((tag) => tag.trim())
@@ -113,6 +134,13 @@ const updateRecipe = async (req, res) => {
         .split("\n")
         .map((step) => step.trim())
         .filter((step) => step !== ""),
+      ingredients: ingredients
+        .split(",")
+        .map((ingredient) => ingredient.trim()),
+      steps: steps
+        .split("\n")
+        .map((step) => step.trim())
+        .filter((step) => step !== ""),
       prepTime: parseInt(prepTime, 10),
       cookTime: parseInt(cookTime, 10),
       difficulty,
@@ -120,6 +148,10 @@ const updateRecipe = async (req, res) => {
       imageUrl,
     };
 
+    const recipe = await recipeService.updateRecipe(
+      req.params.id,
+      updatedRecipe
+    );
     const recipe = await recipeService.updateRecipe(
       req.params.id,
       updatedRecipe
