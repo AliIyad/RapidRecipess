@@ -38,6 +38,22 @@ const RecipeDashboard = ({ userId }) => {
     fetchUserData();
   }, [user, token]);
 
+  // Helper function to merge recipes and remove duplicates
+  const mergeUniqueRecipes = (existingRecipes, newRecipes) => {
+    const uniqueRecipes = [...existingRecipes];
+    const existingIds = new Set(existingRecipes.map(recipe => recipe._id));
+    
+    newRecipes.forEach(recipe => {
+      if (!existingIds.has(recipe._id)) {
+        uniqueRecipes.push(recipe);
+      } else {
+        console.warn(`Duplicate recipe found with ID: ${recipe._id}`);
+      }
+    });
+    
+    return uniqueRecipes;
+  };
+
   // Fetch recipes with pagination
   const fetchRecipes = async () => {
     if (loading || !hasMore) return;
@@ -66,7 +82,8 @@ const RecipeDashboard = ({ userId }) => {
         return;
       }
 
-      setRecipes((prevRecipes) => [...prevRecipes, ...newRecipes]);
+      // Use the helper function to merge recipes and remove duplicates
+      setRecipes((prevRecipes) => mergeUniqueRecipes(prevRecipes, newRecipes));
       setPage((prevPage) => prevPage + 1);
     } catch (error) {
       console.error("Error fetching recipes:", error);
