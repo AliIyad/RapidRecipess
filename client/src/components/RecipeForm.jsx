@@ -293,6 +293,7 @@ const RecipeForm = ({ setRecipes }) => {
             <Alert
               color={feedback.includes("successfully") ? "success" : "danger"}
               className="mt-3"
+              fade={false}
             >
               {feedback}
             </Alert>
