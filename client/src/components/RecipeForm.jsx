@@ -72,7 +72,16 @@ const RecipeForm = ({ setRecipes }) => {
       setFeedback("Recipe submitted successfully!");
       resetForm();
     } catch (error) {
-      setFeedback(error.response?.data?.message || "Error submitting recipe.");
+      console.error("Recipe submission error:", error);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Error submitting recipe. Please try again.";
+
+      setFeedback(`Error: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -120,6 +129,8 @@ const RecipeForm = ({ setRecipes }) => {
               value={formData.title}
               onChange={handleChange}
               required
+              disabled={isSubmitting}
+              placeholder='Enter recipe name'
             />
           </FormGroup>
 
@@ -132,7 +143,12 @@ const RecipeForm = ({ setRecipes }) => {
               value={formData.ingredients}
               onChange={handleChange}
               required
+              disabled={isSubmitting}
             />
+            <small className='text-muted'>
+              Separate ingredients with commas (e.g., 2 cups flour, 1 cup sugar,
+              3 eggs)
+            </small>
           </FormGroup>
 
           <FormGroup>
@@ -144,7 +160,9 @@ const RecipeForm = ({ setRecipes }) => {
               value={formData.steps}
               onChange={handleChange}
               required
+              disabled={isSubmitting}
             />
+            <small className='text-muted'>Enter each step on a new line</small>
           </FormGroup>
 
           <div className='form-row'>
@@ -198,6 +216,9 @@ const RecipeForm = ({ setRecipes }) => {
               onChange={handleChange}
               placeholder='breakfast, vegetarian, quick'
             />
+            <small className='text-muted'>
+              Separate tags with commas (e.g., vegetarian, dessert, quick)
+            </small>
           </FormGroup>
 
           <FormGroup>

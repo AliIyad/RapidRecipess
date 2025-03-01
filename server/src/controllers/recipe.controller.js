@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const recipeService = require("../services/recipe.services");
 const { uploadImageToImgBB } = require("../services/imageUploadService");
+const Tag = require("../models/tag.model");
 
 const getAllRecipes = async (req, res) => {
   try {
@@ -23,18 +24,21 @@ const createRecipe = async (req, res) => {
       imageUrl = await uploadImageToImgBB(req.file.buffer);
     }
 
-    // Convert string tags to proper Tag references
+    // Handle tags
     const tagIds = [];
-    for (const tag of tags.split(",").map((t) => t.trim())) {
-      try {
-        // Try to convert existing tag string to ObjectId
-        const tagId = new mongoose.Types.ObjectId(tag);
-        tagIds.push(tagId);
-      } catch (error) {
-        // If not a valid ObjectId, create a new Tag document
-        const newTag = new mongoose.model("Tag")({ name: tag });
-        await newTag.save();
-        tagIds.push(newTag._id);
+    if (tags) {
+      const tagNames = tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag !== "");
+
+      for (const tagName of tagNames) {
+        // Find existing tag or create new one
+        let tag = await Tag.findOne({ name: tagName.toLowerCase() });
+        if (!tag) {
+          tag = await Tag.create({ name: tagName.toLowerCase() });
+        }
+        tagIds.push(tag._id);
       }
     }
 
@@ -44,7 +48,10 @@ const createRecipe = async (req, res) => {
       ingredients: ingredients
         .split(",")
         .map((ingredient) => ingredient.trim()),
-      steps: steps.split("\n"),
+      steps: steps
+        .split("\n")
+        .map((step) => step.trim())
+        .filter((step) => step !== ""),
       prepTime: parseInt(prepTime, 10),
       cookTime: parseInt(cookTime, 10),
       difficulty: difficulty.toLowerCase(),
@@ -53,7 +60,16 @@ const createRecipe = async (req, res) => {
       imageUrl,
     };
 
+    console.log("New recipe object:", newRecipe);
+
     const recipe = await recipeService.createRecipe(newRecipe);
+
+    // Update tags with the new recipe
+    await Tag.updateMany(
+      { _id: { $in: tagIds } },
+      { $addToSet: { recipes: recipe._id } }
+    );
+
     res.status(201).json(recipe);
   } catch (error) {
     console.error("Error creating recipe:", error);
@@ -68,8 +84,24 @@ const updateRecipe = async (req, res) => {
 
     let imageUrl = null;
     if (req.file) {
-      // Upload image to ImgBB
       imageUrl = await uploadImageToImgBB(req.file.buffer);
+    }
+
+    // Handle tags
+    const tagIds = [];
+    if (tags) {
+      const tagNames = tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag !== "");
+
+      for (const tagName of tagNames) {
+        let tag = await Tag.findOne({ name: tagName.toLowerCase() });
+        if (!tag) {
+          tag = await Tag.create({ name: tagName.toLowerCase() });
+        }
+        tagIds.push(tag._id);
+      }
     }
 
     const updatedRecipe = {
@@ -77,11 +109,14 @@ const updateRecipe = async (req, res) => {
       ingredients: ingredients
         .split(",")
         .map((ingredient) => ingredient.trim()),
-      steps: steps.split("\n"),
+      steps: steps
+        .split("\n")
+        .map((step) => step.trim())
+        .filter((step) => step !== ""),
       prepTime: parseInt(prepTime, 10),
       cookTime: parseInt(cookTime, 10),
       difficulty,
-      tags: tags.split(",").map((tag) => tag.trim()),
+      tags: tagIds,
       imageUrl,
     };
 
@@ -89,6 +124,13 @@ const updateRecipe = async (req, res) => {
       req.params.id,
       updatedRecipe
     );
+
+    // Update tags with the recipe
+    await Tag.updateMany(
+      { _id: { $in: tagIds } },
+      { $addToSet: { recipes: recipe._id } }
+    );
+
     res.status(200).json(recipe);
   } catch (error) {
     console.error("Error updating recipe:", error);

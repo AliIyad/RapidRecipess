@@ -16,45 +16,39 @@ const addInteraction = async (req, res) => {
       reactionType,
     }); // Debugging log
 
-    const interaction = await InteractionService.addInteraction({
+    const result = await InteractionService.addInteraction({
       userId,
       contentType,
       contentId,
       reactionType,
     });
 
-    console.log("Interaction added:", interaction); // Debugging log
+    console.log("Interaction result:", result);
 
-    // Update the related content (recipe/comment) with the number of likes/dislikes
+    // Get updated counts regardless of action
+    const likes = await Interaction.countDocuments({
+      contentType,
+      contentId,
+      reactionType: "like",
+    });
+    const dislikes = await Interaction.countDocuments({
+      contentType,
+      contentId,
+      reactionType: "dislike",
+    });
+
+    // Update the related content with new counts
     if (contentType === "comment") {
-      const comment = await Comment.findById(contentId);
-      const likes = await Interaction.countDocuments({
-        contentType: "comment",
-        contentId,
-        reactionType: "like",
-      });
-      const dislikes = await Interaction.countDocuments({
-        contentType: "comment",
-        contentId,
-        reactionType: "dislike",
-      });
-      await comment.updateOne({ likes, dislikes });
+      await Comment.findByIdAndUpdate(contentId, { likes, dislikes });
     } else if (contentType === "recipe") {
-      const recipe = await Recipe.findById(contentId);
-      const likes = await Interaction.countDocuments({
-        contentType: "recipe",
-        contentId,
-        reactionType: "like",
-      });
-      const dislikes = await Interaction.countDocuments({
-        contentType: "recipe",
-        contentId,
-        reactionType: "dislike",
-      });
-      await recipe.updateOne({ likes, dislikes });
+      await Recipe.findByIdAndUpdate(contentId, { likes, dislikes });
     }
 
-    res.status(200).json(interaction);
+    // Return both the interaction result and current counts
+    res.status(200).json({
+      interaction: result,
+      counts: { likes, dislikes }
+    });
   } catch (error) {
     console.error("Error in addInteraction:", error); // Detailed error log
     res
