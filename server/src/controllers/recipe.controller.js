@@ -17,9 +17,6 @@ const createRecipe = async (req, res) => {
   try {
     const { title, ingredients, steps, prepTime, cookTime, difficulty, tags } =
       req.body;
-    const { title, ingredients, steps, prepTime, cookTime, difficulty, tags } =
-      req.body;
-    const user = req.user;
 
     let imageUrl = null;
     if (req.file) {
@@ -29,11 +26,6 @@ const createRecipe = async (req, res) => {
     // Handle tags
     const tagIds = [];
     if (tags) {
-      const tagNames = tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag !== "");
-
       const tagNames = tags
         .split(",")
         .map((tag) => tag.trim())
@@ -95,8 +87,6 @@ const updateRecipe = async (req, res) => {
   try {
     const { title, ingredients, steps, prepTime, cookTime, difficulty, tags } =
       req.body;
-    const { title, ingredients, steps, prepTime, cookTime, difficulty, tags } =
-      req.body;
 
     let imageUrl = null;
     if (req.file) {
@@ -106,11 +96,6 @@ const updateRecipe = async (req, res) => {
     // Handle tags
     const tagIds = [];
     if (tags) {
-      const tagNames = tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag !== "");
-
       const tagNames = tags
         .split(",")
         .map((tag) => tag.trim())
@@ -148,10 +133,6 @@ const updateRecipe = async (req, res) => {
       imageUrl,
     };
 
-    const recipe = await recipeService.updateRecipe(
-      req.params.id,
-      updatedRecipe
-    );
     const recipe = await recipeService.updateRecipe(
       req.params.id,
       updatedRecipe
@@ -202,6 +183,17 @@ const getRecipesByUser = async (req, res) => {
 };
 
 const getRecipesByName = async (req, res) => {
+  try {
+    const recipes = await recipeService.getRecipesByIngredient(
+      req.params.ingredient
+    );
+    res.status(200).json(recipes);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getRecipesByIngredient = async (req, res) => {
   try {
     const recipes = await recipeService.getRecipesByIngredient(
       req.params.ingredient
