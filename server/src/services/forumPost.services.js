@@ -119,8 +119,20 @@ const toggleLike = async (postId, userId) => {
       post.likes.splice(likeIndex, 1);
     }
 
-    return await post.save();
+    await post.save();
+    
+    // Return fully populated post
+    return await ForumPost.findById(postId)
+      .populate('author', 'username email')
+      .populate({
+        path: 'comments',
+        populate: {
+          path: 'author',
+          select: 'username email'
+        }
+      });
   } catch (error) {
+    console.error('Error in toggleLike service:', error);
     throw error;
   }
 };

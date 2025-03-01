@@ -103,8 +103,20 @@ const toggleLike = async (req, res) => {
   try {
     const userId = req.user._id;
     const post = await forumPostService.toggleLike(req.params.id, userId);
-    res.status(200).json(post);
+    
+    // Format the response to match what the client expects
+    res.status(200).json({
+      _id: post._id,
+      likes: post.likes,
+      author: post.author,
+      content: post.content,
+      title: post.title,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      comments: post.comments
+    });
   } catch (error) {
+    console.error('Error in toggleLike:', error);
     res.status(400).json({ message: error.message });
   }
 };

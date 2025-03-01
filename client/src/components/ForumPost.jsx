@@ -27,16 +27,12 @@ const ForumPost = ({ post, onDelete, onUpdate }) => {
         content: comment
       });
 
-      if (!response.data?.success || !response.data?.comment) {
-        throw new Error('Invalid response format from server');
-      }
-
-      setComments(prevComments => [...prevComments, response.data.comment]);
+      setComments(prevComments => [...prevComments, response.data]);
       setComment('');
       setError('');
     } catch (error) {
       console.error('Error adding comment:', error);
-      setError(error.response?.data?.message || 'Failed to add comment. Please try again.');
+      setError('Failed to add comment');
     }
   };
 
@@ -47,50 +43,32 @@ const ForumPost = ({ post, onDelete, onUpdate }) => {
     }
 
     try {
-      // Optimistic update
-      const newIsLiked = !isLiked;
-      const newLikesCount = isLiked ? likesCount - 1 : likesCount + 1;
-      
-      setIsLiked(newIsLiked);
-      setLikesCount(newLikesCount);
-
       const response = await api.post(`api/forum/${post._id}/like`);
+      const updatedPost = response.data;
 
-      if (!response.data?.success || !response.data?.post) {
+      if (!updatedPost || !updatedPost.likes) {
         throw new Error('Invalid response format from server');
       }
 
-      // Update with actual server data
-      setLikesCount(response.data.post.likesCount);
+      setIsLiked(updatedPost.likes.includes(user._id));
+      setLikesCount(updatedPost.likes.length);
       setError('');
     } catch (error) {
-      // Revert optimistic update on error
-      setIsLiked(!isLiked);
-      setLikesCount(likesCount);
       console.error('Error liking post:', error);
-      setError(error.response?.data?.message || 'Failed to update like status. Please try again.');
+      setError(error.message || 'Failed to like post');
     }
   };
 
   // Fetch comments when showing comments section
   const toggleComments = async () => {
-    const newShowComments = !showComments;
-    setShowComments(newShowComments);
-    
-    if (newShowComments) {
+    setShowComments(!showComments);
+    if (!showComments && comments.length === 0) {
       try {
-        const response = await api.get(`api/forum/${post._id}/comments`);
-        
-        if (!response.data?.success || !Array.isArray(response.data?.comments)) {
-          throw new Error('Invalid response format from server');
-        }
-        
-        setComments(response.data.comments);
-        setError('');
+      const response = await api.get(`api/forum/${post._id}/comments`);
+        setComments(response.data);
       } catch (error) {
         console.error('Error fetching comments:', error);
-        setError(error.response?.data?.message || 'Failed to load comments. Please try again.');
-        setShowComments(false); // Revert on error
+        setError('Failed to load comments');
       }
     }
   };
