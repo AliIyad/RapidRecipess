@@ -3,7 +3,7 @@ const User = require('../models/user.model');
 
 const createAdminUser = async () => {
   try {
-    const email = 'admin@rapidrecipes.com';
+    const email = 'admin2@rapidrecipes.com';
     const password = 'Admin@123';
     const username = 'admin';
 
