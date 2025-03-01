@@ -2,16 +2,43 @@ const Recipe = require("../models/recipe.model");
 const Interaction = require("../models/interaction.model");
 const mongoose = require("mongoose");
 
-const getAllRecipes = async () => {
+const getAllRecipes = async (page = 1, limit = 5) => {
   try {
-    const recipes = await Recipe.find().populate("user").populate("tags");
-    if (!recipes) {
-      throw new Error("No recipes found");
-    }
-    return recipes;
+    const skip = (page - 1) * limit;
+    const recipes = await Recipe.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("tags", "name")
+      .populate("user", "username")
+      .lean();
+
+    // Get interaction counts for each recipe
+    const recipesWithCounts = await Promise.all(
+      recipes.map(async (recipe) => {
+        const [likes, dislikes] = await Promise.all([
+          Interaction.countDocuments({
+            contentId: recipe._id,
+            reactionType: "like",
+          }),
+          Interaction.countDocuments({
+            contentId: recipe._id,
+            reactionType: "dislike",
+          }),
+        ]);
+
+        return {
+          ...recipe,
+          likeCount: likes,
+          dislikeCount: dislikes,
+        };
+      })
+    );
+
+    return recipesWithCounts;
   } catch (error) {
-    console.error("Error fetching recipes:", error);
-    throw new Error(`Error fetching recipes: ${error.message}`);
+    console.error("Error in getAllRecipes:", error);
+    throw error;
   }
 };
 
@@ -19,103 +46,197 @@ const createRecipe = async (recipeData) => {
   try {
     const recipe = new Recipe(recipeData);
     await recipe.save();
-    return recipe;
+    return recipe.populate("tags", "name");
   } catch (error) {
-    console.error("Error creating recipe in DB:", error.message); // Log the error
-    throw new Error(`Error creating recipe: ${error.message}`); // Include the original error message
+    console.error("Error in createRecipe:", error);
+    throw error;
   }
 };
 
-const updateRecipe = async (recipeId, recipeData) => {
+const updateRecipe = async (id, recipeData) => {
   try {
-    const recipe = await Recipe.findByIdAndUpdate(recipeId, recipeData, {
-      new: true,
-    });
-    return recipe;
-  } catch (error) {
-    throw new Error("Error updating recipe");
-  }
-};
+    const recipe = await Recipe.findByIdAndUpdate(
+      id,
+      { $set: recipeData },
+      { new: true }
+    ).populate("tags", "name");
 
-const deleteRecipe = async (recipeId) => {
-  try {
-    await Recipe.findByIdAndDelete(recipeId);
-  } catch (error) {
-    throw new Error("Error deleting recipe");
-  }
-};
-
-const getRecipeById = async (recipeId) => {
-  try {
-    const recipe = await Recipe.findById(recipeId).populate("user");
     if (!recipe) {
       throw new Error("Recipe not found");
     }
     return recipe;
   } catch (error) {
-    console.error("Error fetching recipe:", error);
-    throw new Error(`Error fetching recipe: ${error.message}`);
+    console.error("Error in updateRecipe:", error);
+    throw error;
   }
 };
 
-const getRecipesByUser = async (userId) => {
+const deleteRecipe = async (id) => {
   try {
-    // Convert the user ID string to a MongoDB ObjectId
-    const objectId = mongoose.Types.ObjectId.createFromHexString(userId);
-
-    // Query the recipe collection for recipes belonging to this user
-    const recipes = await Recipe.find({ user: objectId })
-      .sort({ createdAt: -1 })
-      .populate("tags"); // Populate tags if needed
-
-    return recipes;
+    const recipe = await Recipe.findByIdAndDelete(id);
+    if (!recipe) {
+      throw new Error("Recipe not found");
+    }
+    // Also delete associated interactions
+    await Interaction.deleteMany({ contentId: id });
+    return recipe;
   } catch (error) {
-    console.error("Error fetching recipes by user:", error);
-    throw new Error("Error fetching recipes");
+    console.error("Error in deleteRecipe:", error);
+    throw error;
   }
 };
 
-const getRecipesByIngredient = async (ingredient) => {
+const getRecipeById = async (id) => {
   try {
-    const recipes = await Recipe.find({
-      ingredients: { $regex: ingredient, $options: "i" }, // Case-insensitive search
-    });
-    return recipes;
-  } catch (error) {
-    console.error("Error searching recipes by ingredient:", error);
-    throw new Error("Error searching recipes by ingredient");
-  }
-};
+    const recipe = await Recipe.findById(id)
+      .populate("tags", "name")
+      .populate("user", "username")
+      .lean();
 
-const getRecipesByName = async (title) => {
-  try {
-    const recipes = await Recipe.find({
-      title: { $regex: title, $options: "i" }, // Case-insensitive search
-    });
-    return recipes;
-  } catch (error) {
-    console.error("Error searching recipes by name:", error);
-    throw new Error("Error searching recipes by name");
-  }
-};
-
-const getRecipesByTagIds = async (tagIds, limit = 5, skip = 0) => {
-  try {
-    console.log("Received tagIds in getRecipesByTagIds:", tagIds);
-
-    if (!Array.isArray(tagIds)) {
-      throw new Error("tagIds must be an array of ObjectIds");
+    if (!recipe) {
+      throw new Error("Recipe not found");
     }
 
-    const recipes = await Recipe.find({ tags: { $in: tagIds } })
+    // Get interaction counts
+    const [likes, dislikes] = await Promise.all([
+      Interaction.countDocuments({
+        contentId: recipe._id,
+        reactionType: "like",
+      }),
+      Interaction.countDocuments({
+        contentId: recipe._id,
+        reactionType: "dislike",
+      }),
+    ]);
+
+    return {
+      ...recipe,
+      likeCount: likes,
+      dislikeCount: dislikes,
+    };
+  } catch (error) {
+    console.error("Error in getRecipeById:", error);
+    throw error;
+  }
+};
+
+const getRecipesByUser = async (userId, page = 1, limit = 5) => {
+  try {
+    const skip = (page - 1) * limit;
+    const recipes = await Recipe.find({ user: userId })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("tags");
+      .populate("tags", "name")
+      .lean();
 
-    return recipes;
+    // Get interaction counts for each recipe
+    const recipesWithCounts = await Promise.all(
+      recipes.map(async (recipe) => {
+        const [likes, dislikes] = await Promise.all([
+          Interaction.countDocuments({
+            contentId: recipe._id,
+            reactionType: "like",
+          }),
+          Interaction.countDocuments({
+            contentId: recipe._id,
+            reactionType: "dislike",
+          }),
+        ]);
+
+        return {
+          ...recipe,
+          likeCount: likes,
+          dislikeCount: dislikes,
+        };
+      })
+    );
+
+    return recipesWithCounts;
   } catch (error) {
-    console.error("Error fetching recipes by tag IDs:", error.message);
-    throw new Error("Error fetching recipes by tag IDs: " + error.message);
+    console.error("Error in getRecipesByUser:", error);
+    throw error;
+  }
+};
+
+const getRecipesByIngredient = async (ingredient, page = 1, limit = 5) => {
+  try {
+    const skip = (page - 1) * limit;
+    const recipes = await Recipe.find({
+      ingredients: { $regex: ingredient, $options: "i" },
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("tags", "name")
+      .lean();
+
+    // Get interaction counts for each recipe
+    const recipesWithCounts = await Promise.all(
+      recipes.map(async (recipe) => {
+        const [likes, dislikes] = await Promise.all([
+          Interaction.countDocuments({
+            contentId: recipe._id,
+            reactionType: "like",
+          }),
+          Interaction.countDocuments({
+            contentId: recipe._id,
+            reactionType: "dislike",
+          }),
+        ]);
+
+        return {
+          ...recipe,
+          likeCount: likes,
+          dislikeCount: dislikes,
+        };
+      })
+    );
+
+    return recipesWithCounts;
+  } catch (error) {
+    console.error("Error in getRecipesByIngredient:", error);
+    throw error;
+  }
+};
+
+const getRecipesByTagIds = async (tagIds, page = 1, limit = 5) => {
+  try {
+    const skip = (page - 1) * limit;
+    const recipes = await Recipe.find({ tags: { $in: tagIds } })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("tags", "name")
+      .populate("user", "username")
+      .lean();
+
+    // Get interaction counts for each recipe
+    const recipesWithCounts = await Promise.all(
+      recipes.map(async (recipe) => {
+        const [likes, dislikes] = await Promise.all([
+          Interaction.countDocuments({
+            contentId: recipe._id,
+            reactionType: "like",
+          }),
+          Interaction.countDocuments({
+            contentId: recipe._id,
+            reactionType: "dislike",
+          }),
+        ]);
+
+        return {
+          ...recipe,
+          likeCount: likes,
+          dislikeCount: dislikes,
+        };
+      })
+    );
+
+    return recipesWithCounts;
+  } catch (error) {
+    console.error("Error in getRecipesByTagIds:", error);
+    throw error;
   }
 };
 
@@ -128,5 +249,4 @@ module.exports = {
   getRecipesByUser,
   getRecipesByIngredient,
   getRecipesByTagIds,
-  getRecipesByName,
 };

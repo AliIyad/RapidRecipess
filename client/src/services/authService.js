@@ -9,12 +9,13 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Create axios instance with base configuration
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
 
-// Attach Firebase token to requests using context
+// Configure axios to handle different content types
 api.interceptors.request.use(
   async (config) => {
     // Get current user token
@@ -22,8 +23,19 @@ api.interceptors.request.use(
     const user = auth.currentUser;
 
     if (user) {
-      const token = await user.getIdToken();
-      config.headers.Authorization = `Bearer ${token}`;
+      try {
+        // Force token refresh to ensure latest claims
+        const token = await user.getIdToken(true);
+        config.headers.Authorization = `Bearer ${token}`;
+        console.log("Token refreshed and added to request headers");
+      } catch (error) {
+        console.error("Error refreshing token:", error);
+        // Still try with the current token if refresh fails
+        const token = await user.getIdToken();
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } else {
+      console.log("No user found for token refresh");
     }
 
     // Don't set Content-Type for FormData

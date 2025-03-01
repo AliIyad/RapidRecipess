@@ -31,7 +31,7 @@ const CommunityPage = () => {
   const fetchPosts = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await api.get(`/forum?page=${page}`);
+      const response = await api.get(`api/forum?page=${page}`);
       setPosts(response.data.posts);
       setPagination({
         currentPage: response.data.currentPage,

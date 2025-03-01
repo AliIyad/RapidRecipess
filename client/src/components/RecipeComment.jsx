@@ -10,7 +10,7 @@ import {
   Alert,
 } from "reactstrap";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+import api from "../services/authService";
 
 const RecipeComments = ({ recipeId }) => {
   const { user, token, loading: authLoading } = useAuth();
@@ -24,9 +24,7 @@ const RecipeComments = ({ recipeId }) => {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:6969/comments/recipe/${recipeId}`
-        );
+        const response = await api.get(`comments/recipe/${recipeId}`);
         setComments(response.data.comments);
       } catch (err) {
         setError("Failed to load comments.");
@@ -42,11 +40,10 @@ const RecipeComments = ({ recipeId }) => {
     if (!user) return setError("You must be logged in.");
 
     try {
-      const response = await axios.post(
-        `http://localhost:6969/comments`,
-        { content: newComment, recipeId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post('comments', {
+        content: newComment,
+        recipeId
+      });
       setComments((prevComments) => [response.data, ...prevComments]);
       setNewComment("");
     } catch (err) {
@@ -59,11 +56,11 @@ const RecipeComments = ({ recipeId }) => {
     if (!user) return setError("You must be logged in.");
 
     try {
-      const response = await axios.post(
-        `http://localhost:6969/comments/reply`,
-        { content: replyContent, parentCommentId: commentId, recipeId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post('comments/reply', {
+        content: replyContent,
+        parentCommentId: commentId,
+        recipeId
+      });
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment._id === commentId

@@ -60,6 +60,19 @@ app.get("/protected", protect, (req, res) => {
   });
 });
 app.use("/tags", TagRouter);
+// Forum routes
+// Admin routes
+app.use("/admin", AdminRouter);
+
+app.use("/api/forum", (req, res, next) => {
+  console.log('Forum route accessed:', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body
+  });
+  next();
+}, ForumRouter);
 
 app.use("/admin", AdminRouter);
 
