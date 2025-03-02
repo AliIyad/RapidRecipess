@@ -85,15 +85,53 @@ router.post("/login", async (req, res) => {
 router.post("/logout", async (req, res) => {
   try {
     const { idToken } = req.body;
-    const decodedToken = await auth.verifyIdToken(idToken);
 
-    await auth.revokeRefreshTokens(decodedToken.uid);
+    // Validate token exists
+    if (!idToken) {
+      return res.status(400).json({
+        type: "error",
+        message: "No ID token provided",
+      });
+    }
+
+    // Validate token is a string
+    if (typeof idToken !== "string") {
+      return res.status(400).json({
+        type: "error",
+        message: "ID token must be a string",
+      });
+    }
+
+    // Verify the token
+    let decodedToken;
+    try {
+      decodedToken = await auth.verifyIdToken(idToken);
+    } catch (tokenError) {
+      return res.status(401).json({
+        type: "error",
+        message: "Invalid or expired token",
+        error: tokenError.message,
+      });
+    }
+
+    // Find user
+    const user = await User.findOne({ uid: decodedToken.uid });
+    if (!user) {
+      return res.status(404).json({
+        type: "error",
+        message: "User not found!",
+      });
+    }
+
+    // Revoke tokens and sign out
+    await auth.revokeRefreshTokens(user.uid);
 
     res.status(200).json({
       message: "Logged out successfully",
       type: "success",
     });
   } catch (error) {
+    console.error("Logout error:", error); // Add logging for debugging
     res.status(500).json({
       type: "error",
       message: "Error logging out",

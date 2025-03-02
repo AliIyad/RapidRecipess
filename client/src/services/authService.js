@@ -87,7 +87,7 @@ export const loginUser = async ({ email, password }) => {
 export const logoutUser = async () => {
   const auth = getAuth();
   await signOut(auth);
-  await api.post("/auth/logout");
+  return true; // Return true to indicate logout success
 };
 
 export default api;
