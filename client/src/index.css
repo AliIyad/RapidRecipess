@@ -1,33 +1,53 @@
-/* Modern Food-Friendly Color Palette */
 :root {
-  --sage-green: #7fb069;
-  --warm-orange: #ff7f41;
-  --butter-yellow: #ffd23f;
-  --cream: #fff9ee;
-  --rich-brown: #4a3f35;
-  --soft-red: #ff6b6b;
-  --accent-teal: #4ecdc4;
+  /* Base Colors */
+  --color-primary: #4b5e2d;
+  --color-primary-light: #6b8547;
+  --color-secondary: #ff7f41;
+  --color-background: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-text: #2d3748;
+  --color-text-light: #718096;
+  --color-success: #68d391;
+  --color-warning: #f6e05e;
+  --color-error: #fc8181;
+  --color-border: #e2e8f0;
 
-  /* Semantic Colors */
-  --primary: var(--sage-green);
-  --secondary: var(--warm-orange);
-  --background: var(--cream);
-  --text: var(--rich-brown);
-  --accent: var(--butter-yellow);
-  --error: var(--soft-red);
-  --success: var(--accent-teal);
+  /* Gradients */
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 100%
+  );
+  --gradient-overlay: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
 
   /* Shadows */
-  --shadow-sm: 0 2px 4px rgba(74, 63, 53, 0.06);
-  --shadow-md: 0 4px 6px rgba(74, 63, 53, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(74, 63, 53, 0.1);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 
-  /* Animations */
-  --bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Add transitions for smooth color changes */
+  transition: all 2s ease-in-out;
+  animation: colorShift 180s ease-in-out infinite alternate both;
 }
 
-/* Base Styles */
+@keyframes colorShift {
+  0% {
+    --color-primary: #4b5e2d;
+    --color-primary-light: #6b8547;
+    --color-secondary: #ff7f41;
+  }
+
+  100% {
+    --color-primary: #ff7f41;
+    --color-primary-light: #ff9b6b;
+    --color-secondary: #4b5e2d;
+  }
+}
+
 body {
   margin: 0;
   background-color: var(--background);
