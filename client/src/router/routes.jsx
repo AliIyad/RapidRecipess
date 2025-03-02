@@ -12,6 +12,7 @@ import Profile from "../pages/ProfilePage";
 import Settings from "../pages/SettingsPage";
 import Community from "../pages/CommunityPage";
 import RecipeSearch from "../pages/SearchPage";
+import StarterPage from "../pages/StarterPage";
 import AdminPanel from "../pages/AdminPanel";
 
 import Layout from "../components/Layout";
@@ -54,6 +55,7 @@ const Router = () => {
           <Route path='/profile' element={<ProtectedProfile />} />
           <Route path='/settings' element={<ProtectedSettings />} />
           <Route path='/search' element={<RecipeSearch />} />
+          <Route path='/start' element={<StarterPage />} />
           <Route path='/admin' element={<ProtectedAdminPanel />} />
           <Route path='*' element={<PageNotFound />} />
         </Routes>

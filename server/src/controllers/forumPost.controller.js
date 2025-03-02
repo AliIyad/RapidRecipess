@@ -3,17 +3,19 @@ const forumPostService = require("../services/forumPost.services");
 // Create a new forum post
 const createPost = async (req, res) => {
   try {
-    console.log('Creating post with data:', req.body);
-    console.log('User:', req.user);
-    
+    console.log("Creating post with data:", req.body);
+    console.log("User:", req.user);
+
     if (!req.user || !req.user._id) {
-      return res.status(401).json({ message: 'User not authenticated' });
+      return res.status(401).json({ message: "User not authenticated" });
     }
 
     const { title, content, tags } = req.body;
 
     if (!title || !content) {
-      return res.status(400).json({ message: 'Title and content are required' });
+      return res
+        .status(400)
+        .json({ message: "Title and content are required" });
     }
 
     // Create the post
@@ -23,22 +25,22 @@ const createPost = async (req, res) => {
       tags: tags || [],
       author: req.user._id,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
-    console.log('Creating post with data:', postData);
+    console.log("Creating post with data:", postData);
     const post = await forumPostService.createForumPost(postData);
 
     // Populate the author details
-    await post.populate('author', 'username email uid');
-    
-    console.log('Post created:', post);
+    await post.populate("author", "username email uid");
+
+    console.log("Post created:", post);
     res.status(201).json(post);
   } catch (error) {
-    console.error('Error creating post:', error);
-    res.status(500).json({ 
-      message: 'Failed to create post',
-      error: error.message 
+    console.error("Error creating post:", error);
+    res.status(500).json({
+      message: "Failed to create post",
+      error: error.message,
     });
   }
 };
@@ -72,10 +74,14 @@ const getPostById = async (req, res) => {
 const updatePost = async (req, res) => {
   try {
     const userId = req.user._id;
-    const post = await forumPostService.updatePost(req.params.id, req.body, userId);
+    const post = await forumPostService.updatePost(
+      req.params.id,
+      req.body,
+      userId
+    );
     res.status(200).json(post);
   } catch (error) {
-    if (error.message === 'Post not found or unauthorized') {
+    if (error.message === "Post not found or unauthorized") {
       res.status(403).json({ message: error.message });
     } else {
       res.status(400).json({ message: error.message });
@@ -90,7 +96,7 @@ const deletePost = async (req, res) => {
     await forumPostService.deletePost(req.params.id, userId);
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
-    if (error.message === 'Post not found or unauthorized') {
+    if (error.message === "Post not found or unauthorized") {
       res.status(403).json({ message: error.message });
     } else {
       res.status(400).json({ message: error.message });
@@ -103,8 +109,20 @@ const toggleLike = async (req, res) => {
   try {
     const userId = req.user._id;
     const post = await forumPostService.toggleLike(req.params.id, userId);
-    res.status(200).json(post);
+
+    // Format the response to match what the client expects
+    res.status(200).json({
+      _id: post._id,
+      likes: post.likes,
+      author: post.author,
+      content: post.content,
+      title: post.title,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      comments: post.comments,
+    });
   } catch (error) {
+    console.error("Error in toggleLike:", error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -116,14 +134,14 @@ const getComments = async (req, res) => {
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
-    
+
     // Populate author details for each comment
     await post.populate({
-      path: 'comments',
+      path: "comments",
       populate: {
-        path: 'author',
-        select: 'username email'
-      }
+        path: "author",
+        select: "username email",
+      },
     });
 
     res.status(200).json(post.comments);
@@ -146,11 +164,11 @@ const addComment = async (req, res) => {
     const comment = await forumPostService.addComment(postId, {
       content,
       author: userId,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     // Populate author details
-    await comment.populate('author', 'username email');
+    await comment.populate("author", "username email");
 
     res.status(201).json(comment);
   } catch (error) {
@@ -166,5 +184,5 @@ module.exports = {
   deletePost,
   toggleLike,
   getComments,
-  addComment
+  addComment,
 };

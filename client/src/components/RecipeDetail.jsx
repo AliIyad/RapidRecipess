@@ -8,7 +8,6 @@ import {
   CardText,
   Button,
 } from "reactstrap";
-import axios from "axios";
 import { useAuth } from "../context/AuthContext"; // Import the auth context
 import api from "../services/authService";
 
@@ -22,7 +21,7 @@ const RecipeDetail = ({ id }) => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const response = await axios.get(`http://localhost:6969/recipe/${id}`);
+        const response = await api.get(`recipe/${id}`);
         setRecipe(response.data);
         fetchInteractionCounts("recipe", id); // Fetch interaction counts for the recipe
       } catch (error) {
@@ -40,9 +39,7 @@ const RecipeDetail = ({ id }) => {
   useEffect(() => {
     const fetchRecipeTags = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:6969/tags/recipe/${id}`
-        );
+        const response = await api.get(`tags/recipe/${id}`);
 
         // Check if the response contains an array of tags
         if (Array.isArray(response.data)) {
@@ -69,52 +66,31 @@ const RecipeDetail = ({ id }) => {
     }
 
     try {
-      // Optimistically update the UI
-      setRecipe((prevRecipe) => ({
-        ...prevRecipe,
-        likeCount:
-          reactionType === "like"
-            ? prevRecipe.likeCount + 1
-            : prevRecipe.likeCount,
-        dislikeCount:
-          reactionType === "dislike"
-            ? prevRecipe.dislikeCount + 1
-            : prevRecipe.dislikeCount,
-      }));
-
-      // Send the interaction to the backend
-      await api.post("/interaction", {
+      const response = await api.post("interaction", {
         contentType,
         contentId,
         reactionType,
       });
 
-      // Refetch interaction counts for updated data
-      fetchInteractionCounts(contentType, contentId);
+      // Update counts based on server response
+      const { counts } = response.data;
+      setRecipe((prevRecipe) => ({
+        ...prevRecipe,
+        likeCount: counts.likes,
+        dislikeCount: counts.dislikes
+      }));
+
     } catch (error) {
       console.error("Error adding interaction:", error);
       setError("Failed to add interaction. Please try again later.");
-
-      // Revert the optimistic update if the request fails
-      setRecipe((prevRecipe) => ({
-        ...prevRecipe,
-        likeCount:
-          reactionType === "like"
-            ? prevRecipe.likeCount - 1
-            : prevRecipe.likeCount,
-        dislikeCount:
-          reactionType === "dislike"
-            ? prevRecipe.dislikeCount - 1
-            : prevRecipe.dislikeCount,
-      }));
     }
   };
 
   // Fetch interaction counts (like/dislike) for the recipe
   const fetchInteractionCounts = async (contentType, contentId) => {
     try {
-      const response = await axios.get(
-        `/interaction/count/${contentType}/${contentId}`
+      const response = await api.get(
+        `interaction/count/${contentType}/${contentId}`
       );
       setRecipe((prevRecipe) => ({
         ...prevRecipe,

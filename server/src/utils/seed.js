@@ -17,8 +17,10 @@ const Message = require("../models/message.model.js");
 const Friend = require("../models/friend.model.js");
 const Follow = require("../models/follower.model.js");
 const Chatroom = require("../models/chatroom.model.js");
+const ForumPost = require("../models/forumPost.model.js");
 
 const NUM_USERS = 100;
+const NUM_FORUM_POSTS = 50;
 const NUM_RECIPES = 200;
 const NUM_COMMENTS = 500;
 const NUM_MESSAGES = 400;
@@ -50,6 +52,7 @@ const seedDatabase = async () => {
       Friend.deleteMany(),
       Follow.deleteMany(),
       Chatroom.deleteMany(),
+      ForumPost.deleteMany(),
     ]);
 
     console.log("Existing data cleared");
@@ -57,12 +60,21 @@ const seedDatabase = async () => {
     // Create Users
     const users = await User.insertMany(
       Array.from({ length: NUM_USERS }, () => ({
-        username: faker.internet.username(),
+        username: faker.internet.userName(),
         email: faker.internet.email(),
         password: bcrypt.hashSync("password123", 10),
+        uid: faker.string.uuid(),
         verified: faker.datatype.boolean(),
         profilePicture: faker.image.avatar(),
         bio: faker.lorem.sentence(),
+        notificationPreferences: {
+          like: true,
+          comment: true,
+          follow: true,
+          message: true,
+          friendRequest: true,
+          recipeUpdate: true
+        }
       }))
     );
 
@@ -178,6 +190,28 @@ const seedDatabase = async () => {
     );
 
     console.log("Chatrooms seeded");
+
+    // Create Forum Posts
+    await ForumPost.insertMany(
+      Array.from({ length: NUM_FORUM_POSTS }, () => ({
+        title: faker.lorem.sentence(4),
+        content: faker.lorem.paragraphs(2),
+        author: users[Math.floor(Math.random() * users.length)]._id,
+        comments: [],
+        likes: faker.helpers.arrayElements(
+          users.map(user => user._id),
+          { min: 0, max: 20 }
+        ),
+        tags: faker.helpers.arrayElements(
+          ['recipe', 'cooking', 'tips', 'question', 'discussion', 'help', 'sharing'],
+          { min: 1, max: 3 }
+        ),
+        createdAt: faker.date.past(),
+        updatedAt: faker.date.recent()
+      }))
+    );
+
+    console.log("Forum Posts seeded");
 
     console.log("Seeding completed!");
     mongoose.connection.close();
