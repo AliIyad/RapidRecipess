@@ -13,6 +13,7 @@ const ForumPost = ({ post, onDelete, onUpdate }) => {
   const [showComments, setShowComments] = useState(false);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState(post.comments || []);
+  const [isPostingComment, setIsPostingComment] = useState(false);
 
   const handleAddComment = async () => {
     if (!user) {
@@ -22,17 +23,30 @@ const ForumPost = ({ post, onDelete, onUpdate }) => {
 
     if (!comment.trim()) return;
 
+    setIsPostingComment(true);
+    setError(""); // Clear any previous error
+
     try {
       const response = await api.post(`api/forum/${post._id}/comments`, {
         content: comment,
       });
 
-      setComments((prevComments) => [...prevComments, response.data]);
-      setComment("");
-      setError("");
+      console.log("Comment post response:", response);
+
+      if (response.status === 201 && response.data) {
+        // Update comments list with the new comment
+        setComments((prevComments) => [...prevComments, response.data]);
+        setComment(""); // Clear comment input
+        setError(""); // Clear any error messages
+      } else {
+        console.error("Invalid response format:", response);
+        setError("Unexpected response from server");
+      }
     } catch (error) {
-      console.error("Error adding comment:", error);
-      setError("Failed to add comment");
+      console.error("Error adding comment:", error.response || error);
+      setError(error.response?.data?.message || "Failed to add comment. Please try again.");
+    } finally {
+      setIsPostingComment(false);
     }
   };
 
@@ -169,15 +183,34 @@ const ForumPost = ({ post, onDelete, onUpdate }) => {
                 className='form-control mb-2'
                 placeholder='Write a comment...'
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={(e) => {
+                  setComment(e.target.value);
+                  setError(""); // Clear error when user starts typing
+                }}
+                disabled={isPostingComment}
+                aria-label="Comment text"
               />
               <Button
                 color='primary'
                 size='sm'
                 onClick={handleAddComment}
-                disabled={!comment.trim()}>
-                Add Comment
+                disabled={!comment.trim() || isPostingComment}
+                aria-label={isPostingComment ? "Posting comment..." : "Add comment"}
+              >
+                {isPostingComment ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Posting...
+                  </>
+                ) : (
+                  'Add Comment'
+                )}
               </Button>
+              {error && (
+                <div className='alert alert-danger mt-2' role="alert">
+                  {error}
+                </div>
+              )}
             </div>
             {comments.map((comment) => (
               <Card key={comment._id} className='mb-2'>

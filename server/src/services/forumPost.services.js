@@ -1,4 +1,5 @@
 const ForumPost = require("../models/forumPost.model");
+const mongoose = require("mongoose");
 
 // Create a new forum post
 const createForumPost = async (postData) => {
@@ -43,7 +44,7 @@ const getAllPosts = async (page = 1, limit = 10) => {
   try {
     const posts = await ForumPost.find()
       .populate("author", "username email")
-      .populate("comments")
+      .populate("comments.author", "username email")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
@@ -66,13 +67,7 @@ const getPostById = async (postId) => {
   try {
     return await ForumPost.findById(postId)
       .populate("author", "username email")
-      .populate({
-        path: "comments",
-        populate: {
-          path: "author",
-          select: "username email",
-        },
-      });
+      .populate("comments.author", "username email");
   } catch (error) {
     throw error;
   }
@@ -129,13 +124,7 @@ const toggleLike = async (postId, userId) => {
     // Return fully populated post
     return await ForumPost.findById(postId)
       .populate("author", "username email")
-      .populate({
-        path: "comments",
-        populate: {
-          path: "author",
-          select: "username email",
-        },
-      });
+      .populate("comments.author", "username email");
   } catch (error) {
     console.error("Error in toggleLike service:", error);
     throw error;
@@ -161,13 +150,14 @@ const addComment = async (postId, commentData) => {
     post.comments.push(comment);
     await post.save();
 
-    // Return the newly added comment with populated author
-    const populatedPost = await ForumPost.findById(postId).populate({
-      path: "comments.author",
-      select: "username email",
-    });
-
-    return populatedPost.comments[populatedPost.comments.length - 1];
+    // Get the populated post to return the new comment
+    const populatedPost = await ForumPost.findById(postId).lean();
+    const newComment = post.comments[post.comments.length - 1];
+    
+    // Add author details directly
+    newComment.author = await mongoose.model('User').findById(newComment.author).select('username email').lean();
+    
+    return newComment;
   } catch (error) {
     throw error;
   }
@@ -176,10 +166,8 @@ const addComment = async (postId, commentData) => {
 // Get comments for a post
 const getComments = async (postId) => {
   try {
-    const post = await ForumPost.findById(postId).populate({
-      path: "comments.author",
-      select: "username email",
-    });
+    const post = await ForumPost.findById(postId)
+      .populate("comments.author", "username email");
 
     if (!post) {
       throw new Error("Post not found");

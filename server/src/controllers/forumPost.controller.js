@@ -161,16 +161,13 @@ const addComment = async (req, res) => {
       return res.status(400).json({ message: "Comment content is required" });
     }
 
-    const comment = await forumPostService.addComment(postId, {
+    const newComment = await forumPostService.addComment(postId, {
       content,
       author: userId,
       createdAt: new Date(),
     });
 
-    // Populate author details
-    await comment.populate("author", "username email");
-
-    res.status(201).json(comment);
+    res.status(201).json(newComment);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
