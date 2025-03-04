@@ -23,7 +23,7 @@ router.get("/", async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // If we have recipes, fetch them with pagination
+    // If we have recipes, fetch them with pagination and interaction counts
     const recipes = await Recipe.find()
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -32,8 +32,30 @@ router.get("/", async (req, res) => {
       .populate('user', 'username')
       .lean();
 
-    // Return the recipes (will be an array, even if empty)
-    return res.status(200).json(recipes);
+    // Get interaction counts for each recipe
+    const recipesWithCounts = await Promise.all(
+      recipes.map(async (recipe) => {
+        const [likes, dislikes] = await Promise.all([
+          mongoose.model('Interaction').countDocuments({
+            contentId: recipe._id,
+            reactionType: 'like'
+          }),
+          mongoose.model('Interaction').countDocuments({
+            contentId: recipe._id,
+            reactionType: 'dislike'
+          })
+        ]);
+
+        return {
+          ...recipe,
+          likeCount: likes,
+          dislikeCount: dislikes
+        };
+      })
+    );
+
+    // Return the recipes with interaction counts
+    return res.status(200).json(recipesWithCounts);
   } catch (error) {
     // Only log the error, don't send 500 since the client can still handle an empty array
     console.error("Error in recipe fetch:", error);
@@ -75,7 +97,29 @@ router.get("/recommended", async (req, res) => {
       .populate('user', 'username')
       .lean();
 
-    res.status(200).json(recipes);
+    // Get interaction counts for each recipe
+    const recipesWithCounts = await Promise.all(
+      recipes.map(async (recipe) => {
+        const [likes, dislikes] = await Promise.all([
+          mongoose.model('Interaction').countDocuments({
+            contentId: recipe._id,
+            reactionType: 'like'
+          }),
+          mongoose.model('Interaction').countDocuments({
+            contentId: recipe._id,
+            reactionType: 'dislike'
+          })
+        ]);
+
+        return {
+          ...recipe,
+          likeCount: likes,
+          dislikeCount: dislikes
+        };
+      })
+    );
+
+    res.status(200).json(recipesWithCounts);
   } catch (error) {
     console.error("Error in recommended recipes:", error);
     res.status(200).json([]); // Return empty array instead of error
