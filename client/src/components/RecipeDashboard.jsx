@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import api from "../services/authService";
 import {
   Card,
@@ -53,8 +54,6 @@ const RecipeDashboard = ({ userId }) => {
     newRecipes.forEach((recipe) => {
       if (!existingIds.has(recipe._id)) {
         uniqueRecipes.push(recipe);
-      } else {
-        console.warn(`Duplicate recipe found with ID: ${recipe._id}`);
       }
     });
 
@@ -66,37 +65,31 @@ const RecipeDashboard = ({ userId }) => {
     if (loading || !hasMore) return;
 
     setLoading(true);
+    
     try {
       let endpoint = `recipe?page=${page}&limit=${ITEMS_PER_PAGE}`;
 
-      // If there are preferred tags, use them as a filter
       if (preferredTags.length > 0) {
-        endpoint = `recipe/recommended?tagIds=${preferredTags.join(
-          ","
-        )}&page=${page}&limit=${ITEMS_PER_PAGE}`;
+        endpoint = `recipe/recommended?tagIds=${preferredTags.join(",")}&page=${page}&limit=${ITEMS_PER_PAGE}`;
       }
 
-      const response = await api.get(endpoint);
-      console.log("API Response:", response.data);
-
-      if (!Array.isArray(response.data)) {
-        throw new Error(
-          `Invalid response format: ${JSON.stringify(response.data)}`
-        );
-      }
-
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/${endpoint}`, {
+        validateStatus: function (status) {
+          return status === 200; // Only treat 200 as success
+        }
+      });
+      
       const newRecipes = response.data;
       if (newRecipes.length === 0) {
         setHasMore(false);
         return;
       }
 
-      // Use the helper function to merge recipes and remove duplicates
       setRecipes((prevRecipes) => mergeUniqueRecipes(prevRecipes, newRecipes));
       setPage((prevPage) => prevPage + 1);
     } catch (error) {
-      console.error("Error fetching recipes:", error);
-      setError("Failed to fetch recipes. Please try again later.");
+      // Don't set error state since we're handling empty responses gracefully
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
@@ -104,8 +97,38 @@ const RecipeDashboard = ({ userId }) => {
 
   // Initial fetch
   useEffect(() => {
-    fetchRecipes();
-  }, []); // Only run once on component mount
+    const initialFetch = async () => {
+      setPage(1);
+      setRecipes([]);
+      setHasMore(true);
+      setError(null);
+      setLoading(true);
+      
+      try {
+        let endpoint = `recipe?page=1&limit=${ITEMS_PER_PAGE}`;
+        if (preferredTags.length > 0) {
+          endpoint = `recipe/recommended?tagIds=${preferredTags.join(",")}&page=1&limit=${ITEMS_PER_PAGE}`;
+        }
+
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/${endpoint}`, {
+          validateStatus: function (status) {
+            return status === 200; // Only treat 200 as success
+          }
+        });
+        
+        setRecipes(response.data);
+        setPage(2);
+        setHasMore(response.data.length === ITEMS_PER_PAGE);
+      } catch (error) {
+        // Don't set error state or log error since we're handling empty responses gracefully
+        setHasMore(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initialFetch();
+  }, [preferredTags]);
 
   const handleLoadMore = () => {
     fetchRecipes();
@@ -114,7 +137,6 @@ const RecipeDashboard = ({ userId }) => {
   const handleInteraction = async (contentType, contentId, reactionType) => {
     if (!isAuthenticated) {
       setError("You must be logged in to like or dislike a recipe.");
-      // Clear error after 3 seconds
       setTimeout(() => setError(null), 3000);
       return;
     }
@@ -126,7 +148,6 @@ const RecipeDashboard = ({ userId }) => {
         reactionType,
       });
 
-      // Update the recipe's counts in the list
       const { counts } = response.data;
       setRecipes((prevRecipes) =>
         prevRecipes.map((recipe) =>
@@ -142,6 +163,7 @@ const RecipeDashboard = ({ userId }) => {
     } catch (error) {
       console.error("Error adding interaction:", error);
       setError("Failed to add interaction. Please try again later.");
+      setTimeout(() => setError(null), 3000);
     }
   };
 
@@ -163,7 +185,12 @@ const RecipeDashboard = ({ userId }) => {
         </div>
       )}
       <div className='recipe-list'>
-        {recipes.length > 0 ? (
+        {loading && recipes.length === 0 ? (
+          <div className="text-center my-5">
+            <Spinner color="primary" />
+            <p className="mt-2">Loading recipes...</p>
+          </div>
+        ) : recipes.length > 0 ? (
           recipes.map((recipe) => (
             <div key={recipe._id} className='recipe-post'>
               <Link to={`/recipe/${recipe._id}`} className='recipe-link'>
@@ -193,7 +220,7 @@ const RecipeDashboard = ({ userId }) => {
                         color='primary'
                         size='sm'
                         onClick={(e) => {
-                          e.preventDefault(); // Prevent navigation
+                          e.preventDefault();
                           handleInteraction("recipe", recipe._id, "like");
                         }}>
                         Like ({recipe.likeCount || 0})
@@ -204,7 +231,7 @@ const RecipeDashboard = ({ userId }) => {
                         size='sm'
                         className='ms-2'
                         onClick={(e) => {
-                          e.preventDefault(); // Prevent navigation
+                          e.preventDefault();
                           handleInteraction("recipe", recipe._id, "dislike");
                         }}>
                         Dislike ({recipe.dislikeCount || 0})
@@ -220,7 +247,7 @@ const RecipeDashboard = ({ userId }) => {
         )}
       </div>
 
-      {hasMore && (
+      {hasMore && recipes.length > 0 && !loading && (
         <div className='text-center mt-4 mb-4'>
           <Button
             color='primary'
@@ -230,7 +257,7 @@ const RecipeDashboard = ({ userId }) => {
             {loading ? (
               <>
                 <Spinner size='sm' className='me-2' />
-                Loading...
+                Loading more...
               </>
             ) : (
               "Load More"

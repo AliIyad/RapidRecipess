@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import axios from "axios";
 import {
   Container,
   Card,
@@ -8,44 +9,53 @@ import {
   CardText,
   Button,
 } from "reactstrap";
-import { useAuth } from "../context/AuthContext"; // Import the auth context
+import { useAuth } from "../context/AuthContext";
 import api from "../services/authService";
+import RecipeComment from "./RecipeComment";
 
 const RecipeDetail = ({ id }) => {
   const [recipe, setRecipe] = useState({ tags: [] });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { user, isAuthenticated } = useAuth(); // Get user and authentication status
+  const { user, isAuthenticated } = useAuth();
 
   // Fetch recipe details
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const response = await api.get(`recipe/${id}`);
+        console.log('Fetching recipe with ID:', id);
+        // Use axios directly for unauthenticated request
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/recipe/${id}`);
+        console.log('Recipe response:', response.data);
         setRecipe(response.data);
-        fetchInteractionCounts("recipe", id); // Fetch interaction counts for the recipe
+        if (isAuthenticated) {
+          fetchInteractionCounts("recipe", id);
+        }
       } catch (error) {
-        console.error("Error fetching recipe:", error);
-        setError("Failed to fetch recipe. Please try again later.");
+        console.error("Error fetching recipe:", error.response || error);
+        if (error.response?.status === 400) {
+          setError("Invalid recipe ID format");
+        } else if (error.response?.status === 404) {
+          setError("Recipe not found");
+        } else {
+          setError("Failed to fetch recipe. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchRecipe();
-    fetchInteractionCounts("recipe", id);
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   useEffect(() => {
     const fetchRecipeTags = async () => {
       try {
         const response = await api.get(`tags/recipe/${id}`);
-
-        // Check if the response contains an array of tags
         if (Array.isArray(response.data)) {
           setRecipe((prevRecipe) => ({
             ...prevRecipe,
-            tags: response.data, // Make sure this is an array of tags
+            tags: response.data,
           }));
         } else {
           console.error("Received tags are not in array format", response.data);
@@ -62,7 +72,6 @@ const RecipeDetail = ({ id }) => {
   const handleInteraction = async (contentType, contentId, reactionType) => {
     if (!isAuthenticated) {
       setError("You must be logged in to like or dislike a recipe.");
-      // Clear error after 3 seconds
       setTimeout(() => setError(null), 3000);
       return;
     }
@@ -74,7 +83,6 @@ const RecipeDetail = ({ id }) => {
         reactionType,
       });
 
-      // Update counts based on server response
       const { counts } = response.data;
       setRecipe((prevRecipe) => ({
         ...prevRecipe,
@@ -201,6 +209,11 @@ const RecipeDetail = ({ id }) => {
           </div>
         </CardBody>
       </Card>
+
+      {/* Comments Section */}
+      <div className="mt-5">
+        <RecipeComment recipeId={id} />
+      </div>
     </Container>
   );
 };

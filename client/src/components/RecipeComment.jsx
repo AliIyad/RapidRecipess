@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Card,
   CardBody,
@@ -13,7 +14,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/authService";
 
 const RecipeComments = ({ recipeId }) => {
-  const { user, token, loading: authLoading } = useAuth();
+  const { user, token, loading: authLoading, isAuthenticated } = useAuth();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [error, setError] = useState(null);
@@ -24,9 +25,11 @@ const RecipeComments = ({ recipeId }) => {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await api.get(`comments/recipe/${recipeId}`);
+        // Use axios directly for fetching comments
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/comments/recipe/${recipeId}`);
         setComments(response.data.comments);
       } catch (err) {
+        console.error('Error fetching comments:', err);
         setError("Failed to load comments.");
       } finally {
         setLoading(false);
@@ -37,7 +40,7 @@ const RecipeComments = ({ recipeId }) => {
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return setError("Comment cannot be empty.");
-    if (!user) return setError("You must be logged in.");
+    if (!isAuthenticated) return setError("You must be logged in to comment.");
 
     try {
       const response = await api.post('comments', {
@@ -46,14 +49,16 @@ const RecipeComments = ({ recipeId }) => {
       });
       setComments((prevComments) => [response.data, ...prevComments]);
       setNewComment("");
+      setError(null);
     } catch (err) {
+      console.error('Error posting comment:', err);
       setError("Failed to post comment.");
     }
   };
 
   const handleReplyComment = async (commentId) => {
     if (!replyContent.trim()) return setError("Reply cannot be empty.");
-    if (!user) return setError("You must be logged in.");
+    if (!isAuthenticated) return setError("You must be logged in to reply.");
 
     try {
       const response = await api.post('comments/reply', {
@@ -70,7 +75,9 @@ const RecipeComments = ({ recipeId }) => {
       );
       setReplyContent("");
       setActiveReply(null);
+      setError(null);
     } catch (err) {
+      console.error('Error posting reply:', err);
       setError("Failed to post reply.");
     }
   };
@@ -80,33 +87,34 @@ const RecipeComments = ({ recipeId }) => {
     setReplyContent("");
   };
 
-  if (authLoading) return <Spinner color='primary' />;
-  if (!user) return <div>You must be logged in to view comments.</div>;
+  if (loading) return <Spinner color='primary' />;
 
   return (
     <div className='recipe-comments mt-5'>
       <h3>Comments</h3>
       {error && <Alert color='danger'>{error}</Alert>}
 
-      <div className='add-comment mb-4'>
-        <Input
-          type='textarea'
-          placeholder='Add a comment...'
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-        />
-        <Button
-          color='primary'
-          onClick={handleAddComment}
-          className='mt-2'
-          disabled={loading || !newComment.trim()}>
-          {loading ? <Spinner size='sm' color='light' /> : "Post Comment"}
-        </Button>
-      </div>
+      {isAuthenticated ? (
+        <div className='add-comment mb-4'>
+          <Input
+            type='textarea'
+            placeholder='Add a comment...'
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+          />
+          <Button
+            color='primary'
+            onClick={handleAddComment}
+            className='mt-2'
+            disabled={!newComment.trim()}>
+            Post Comment
+          </Button>
+        </div>
+      ) : (
+        <Alert color='info'>Please log in to post comments.</Alert>
+      )}
 
-      {loading ? (
-        <Spinner color='primary' />
-      ) : comments.length === 0 ? (
+      {comments.length === 0 ? (
         <p>No comments yet. Be the first to comment!</p>
       ) : (
         comments.map((comment) => (
@@ -120,7 +128,7 @@ const RecipeComments = ({ recipeId }) => {
               </CardTitle>
               <CardText>{comment.content}</CardText>
 
-              {user && (
+              {isAuthenticated && (
                 <Button
                   color='link'
                   onClick={() => toggleReplyForm(comment._id)}
@@ -142,16 +150,12 @@ const RecipeComments = ({ recipeId }) => {
                     onClick={() => handleReplyComment(comment._id)}
                     className='mt-2'
                     disabled={!replyContent.trim()}>
-                    {loading ? (
-                      <Spinner size='sm' color='light' />
-                    ) : (
-                      "Post Reply"
-                    )}
+                    Post Reply
                   </Button>
                 </div>
               )}
 
-              {comment.replies && (
+              {comment.replies && comment.replies.length > 0 && (
                 <div className='replies-container ml-4 mt-3'>
                   {comment.replies.map((reply) => (
                     <Card key={reply._id} className='mb-2 shadow-sm rounded-lg'>
@@ -162,7 +166,9 @@ const RecipeComments = ({ recipeId }) => {
                           </span>
                         </CardTitle>
                         <CardText>{reply.content}</CardText>
-                        {new Date(reply.createdAt).toLocaleString()}
+                        <small className='text-muted'>
+                          {new Date(reply.createdAt).toLocaleString()}
+                        </small>
                       </CardBody>
                     </Card>
                   ))}

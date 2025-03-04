@@ -5,10 +5,14 @@ const Tag = require("../models/tag.model");
 
 const getAllRecipes = async (req, res) => {
   try {
-    const recipes = await recipeService.getAllRecipes();
-    console.log(recipes);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    
+    const recipes = await recipeService.getAllRecipes(page, limit);
+    console.log('Fetched recipes:', recipes.length);
     res.status(200).json(recipes);
   } catch (error) {
+    console.error('Error in getAllRecipes:', error);
     res.status(500).json({ message: error.message });
   }
 };

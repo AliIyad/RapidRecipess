@@ -88,6 +88,10 @@ const deleteRecipe = async (id) => {
 
 const getRecipeById = async (id) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid recipe ID format");
+    }
+    
     const recipe = await Recipe.findById(id)
       .populate("tags", "name")
       .populate("user", "username")
