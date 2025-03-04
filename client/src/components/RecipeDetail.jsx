@@ -62,6 +62,8 @@ const RecipeDetail = ({ id }) => {
   const handleInteraction = async (contentType, contentId, reactionType) => {
     if (!isAuthenticated) {
       setError("You must be logged in to like or dislike a recipe.");
+      // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
@@ -107,7 +109,12 @@ const RecipeDetail = ({ id }) => {
   }
 
   if (error) {
-    return <p className='text-danger'>{error}</p>;
+    return (
+      <div className="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>{error}</strong>
+        <button type="button" className="btn-close" onClick={() => setError(null)} aria-label="Close"></button>
+      </div>
+    );
   }
 
   if (!recipe) {

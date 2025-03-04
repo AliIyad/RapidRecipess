@@ -13,7 +13,7 @@ import { useAuth } from "../context/AuthContext";
 import "../CSS/RecipeDashboard.css";
 
 const RecipeDashboard = ({ userId }) => {
-  const { user, loading: userLoading, token } = useAuth();
+  const { user, loading: userLoading, token, isAuthenticated } = useAuth();
   const [userData, setUserData] = useState({});
   const [recipes, setRecipes] = useState([]);
   const [error, setError] = useState(null);
@@ -112,8 +112,10 @@ const RecipeDashboard = ({ userId }) => {
   };
 
   const handleInteraction = async (contentType, contentId, reactionType) => {
-    if (!user) {
+    if (!isAuthenticated) {
       setError("You must be logged in to like or dislike a recipe.");
+      // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
@@ -154,7 +156,12 @@ const RecipeDashboard = ({ userId }) => {
   return (
     <div className='dashboard mt-5'>
       <h2>Recipe Dashboard</h2>
-      {error && <p className='text-danger'>{error}</p>}
+      {error && (
+        <div className="alert alert-warning alert-dismissible fade show" role="alert">
+          <strong>{error}</strong>
+          <button type="button" className="btn-close" onClick={() => setError(null)} aria-label="Close"></button>
+        </div>
+      )}
       <div className='recipe-list'>
         {recipes.length > 0 ? (
           recipes.map((recipe) => (
