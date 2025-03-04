@@ -42,15 +42,12 @@ const createRecipe = async (req, res) => {
     }
 
     // Create a new recipe object with proper tag references
+    if (!req.user) {
+      throw new Error("User not authenticated");
+    }
+
     const newRecipe = {
       title,
-      ingredients: ingredients
-        .split(",")
-        .map((ingredient) => ingredient.trim()),
-      steps: steps
-        .split("\n")
-        .map((step) => step.trim())
-        .filter((step) => step !== ""),
       ingredients: ingredients
         .split(",")
         .map((ingredient) => ingredient.trim()),
@@ -62,7 +59,7 @@ const createRecipe = async (req, res) => {
       cookTime: parseInt(cookTime, 10),
       difficulty: difficulty.toLowerCase(),
       tags: tagIds,
-      user: user._id,
+      user: req.user._id,
       imageUrl,
     };
 
@@ -112,13 +109,6 @@ const updateRecipe = async (req, res) => {
 
     const updatedRecipe = {
       title,
-      ingredients: ingredients
-        .split(",")
-        .map((ingredient) => ingredient.trim()),
-      steps: steps
-        .split("\n")
-        .map((step) => step.trim())
-        .filter((step) => step !== ""),
       ingredients: ingredients
         .split(",")
         .map((ingredient) => ingredient.trim()),

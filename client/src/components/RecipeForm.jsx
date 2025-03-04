@@ -7,6 +7,7 @@ import "../CSS/RecipeForm.css";
 
 const RecipeForm = ({ setRecipes }) => {
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     ingredients: "",
@@ -39,24 +40,39 @@ const RecipeForm = ({ setRecipes }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      setFeedback("Please log in to submit a recipe.");
-      return;
-    }
-
-    const formPayload = new FormData();
-    Object.keys(formData).forEach((key) => {
-      if (key === "ingredients" || key === "steps" || key === "tags") {
-        formPayload.append(
-          key,
-          formData[key].split(",").map((item) => item.trim())
-        );
-      } else {
-        formPayload.append(key, formData[key]);
-      }
-    });
-
+    setIsSubmitting(true);
+    
     try {
+      if (!user || !user.id) {
+        throw new Error("Please log in to submit a recipe.");
+      }
+
+      const formPayload = new FormData();
+      // Add all form data directly - let server handle the splitting
+      formPayload.append('title', formData.title);
+      formPayload.append('ingredients', formData.ingredients);
+      formPayload.append('steps', formData.steps);
+      formPayload.append('prepTime', formData.prepTime);
+      formPayload.append('cookTime', formData.cookTime);
+      formPayload.append('difficulty', formData.difficulty);
+      formPayload.append('tags', formData.tags || ''); // Ensure tags is at least an empty string
+      if (formData.image) {
+        formPayload.append('image', formData.image);
+      }
+      formPayload.append('userId', user.id);
+
+      // Log the form data being sent (for debugging)
+      console.log('Submitting recipe with data:', {
+        title: formData.title,
+        ingredients: formData.ingredients,
+        steps: formData.steps,
+        prepTime: formData.prepTime,
+        cookTime: formData.cookTime,
+        difficulty: formData.difficulty,
+        tags: formData.tags,
+        userId: user.id
+      });
+
       const response = await axios.post(
         "http://localhost:6969/recipe",
         formPayload,
@@ -72,10 +88,16 @@ const RecipeForm = ({ setRecipes }) => {
       setFeedback("Recipe submitted successfully!");
       resetForm();
     } catch (error) {
-      console.error("Recipe submission error:", error);
+      console.error("Recipe submission error details:", {
+        error: error,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
 
-      const errorMessage =
+      const errorMessage = 
         error.response?.data?.message ||
+        error.response?.data ||
         error.message ||
         "Error submitting recipe. Please try again.";
 
@@ -152,7 +174,7 @@ const RecipeForm = ({ setRecipes }) => {
           </FormGroup>
 
           <FormGroup>
-            <Label for='steps'>Steps (separated by periods)</Label>
+            <Label for='steps'>Steps (one per line)</Label>
             <Input
               type='textarea'
               id='steps'
@@ -161,8 +183,10 @@ const RecipeForm = ({ setRecipes }) => {
               onChange={handleChange}
               required
               disabled={isSubmitting}
+              placeholder="1. Preheat oven to 350°F&#13;&#10;2. Mix ingredients&#13;&#10;3. Bake for 30 minutes"
+              rows={5}
             />
-            <small className='text-muted'>Enter each step on a new line</small>
+            <small className='text-muted'>Enter each step on a new line (press Enter after each step)</small>
           </FormGroup>
 
           <div className='form-row'>
@@ -176,6 +200,7 @@ const RecipeForm = ({ setRecipes }) => {
                 onChange={handleChange}
                 min='1'
                 required
+                disabled={isSubmitting}
               />
             </FormGroup>
 
@@ -188,6 +213,7 @@ const RecipeForm = ({ setRecipes }) => {
                 value={formData.cookTime}
                 onChange={handleChange}
                 min='1'
+                disabled={isSubmitting}
               />
             </FormGroup>
           </div>
@@ -199,7 +225,8 @@ const RecipeForm = ({ setRecipes }) => {
               id='difficulty'
               name='difficulty'
               value={formData.difficulty}
-              onChange={handleChange}>
+              onChange={handleChange}
+              disabled={isSubmitting}>
               <option value='easy'>Easy</option>
               <option value='medium'>Medium</option>
               <option value='hard'>Hard</option>
@@ -215,6 +242,7 @@ const RecipeForm = ({ setRecipes }) => {
               value={formData.tags}
               onChange={handleChange}
               placeholder='breakfast, vegetarian, quick'
+              disabled={isSubmitting}
             />
             <small className='text-muted'>
               Separate tags with commas (e.g., vegetarian, dessert, quick)
@@ -229,12 +257,13 @@ const RecipeForm = ({ setRecipes }) => {
               name='image'
               onChange={handleChange}
               accept='image/jpeg, image/png'
+              disabled={isSubmitting}
             />
           </FormGroup>
 
           <div className='form-actions'>
-            <Button type='submit' color='primary'>
-              Submit Recipe
+            <Button type='submit' color='primary' disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Recipe"}
             </Button>
             <Button
               type='button'
@@ -251,7 +280,8 @@ const RecipeForm = ({ setRecipes }) => {
           color={feedback.includes("success") ? "success" : "danger"}
           isOpen={feedbackVisible}
           toggle={() => setFeedbackVisible(false)}
-          className='feedback-alert'>
+          className='feedback-alert'
+          fade>
           {feedback}
         </Alert>
       )}
